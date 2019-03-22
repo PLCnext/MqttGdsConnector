@@ -1,4 +1,13 @@
-﻿#include "GdsConnectorComponent.hpp"
+﻿///////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright PHOENIX CONTACT Electronics GmbH
+//
+///////////////////////////////////////////////////////////////////////////////
+#include "GdsConnectorComponent.hpp"
+#include <valijson/adapters/nlohmann_json_adapter.hpp>
+#include <valijson/schema.hpp>
+#include <valijson/schema_parser.hpp>
+#include <valijson/validator.hpp>
 
 namespace PxceTcs { namespace Mqtt
 {
@@ -6,7 +15,6 @@ namespace PxceTcs { namespace Mqtt
 using namespace Arp::System::Rsc;
 using namespace PxceTcs::MqttClient::Services;
 using namespace Arp::Plc::Gds::Services;
-//using namespace Arp::Plc::Commons::Meta;
 
 bool IsSupported(RscType type)
 {
@@ -122,7 +130,10 @@ size_t Sizeof(RscVariant<512> variant)
 
         case RscType::String:
         {
-            return strlen(variant.GetChars());
+            // Strings are null-terminated, and the terminating
+            // NULL character is sent with the MQTT payload.
+            // strlen does not count the terminating NULL, so add 1.
+            return strlen(variant.GetChars()) + 1;
             break;
         }
 
@@ -164,7 +175,7 @@ void GdsConnectorComponent::SubscribeServices()
     // subscribe the services used by this component here
 
     // TODO: TryGetService first, and log a message if it fails.
-    this->pMqttClientService = ServiceManager::GetService<IMqttClientService>("Pxce");
+    this->pMqttClientService = ServiceManager::GetService<IMqttClientService>("PxceTcs");
     this->log.Info("Subscribed to MQTT Client Service.");
 
     this->pDataAccessService = ServiceManager::GetService<IDataAccessService>("Arp");
@@ -185,12 +196,64 @@ void GdsConnectorComponent::LoadConfig()
     }
     else
     {
-       // Read the settings and validate them against the schema
+        // Read the settings
         this->config = json::parse(settingsFile);
-        // TODO: Validate the settings against a schema
-        // this->log.Error("Configuration in file {0} is not valid.", this->settingsPath);
+    	this->log.Info("Loaded configuration from file: {0}", this->settingsPath);
+
+        // Get the configuration schema file
+        std::ifstream settingsSchemaFile(SCHEMA_FILE, ios_base::in);
+
+        // Check for the existence of the schema file
+        if(!settingsSchemaFile)
+        {
+            // Schema file doesn't exist.
+            this->log.Error("Configuration schema file {0} does not exist.", SCHEMA_FILE);
+        }
+        else
+        {
+            using valijson::Schema;
+            using valijson::SchemaParser;
+            using valijson::Validator;
+            using valijson::ValidationResults;
+            using valijson::adapters::NlohmannJsonAdapter;
+
+            // Read the schema
+            json configJsonSchema = json::parse(settingsSchemaFile);
+        	this->log.Info("Loaded configuration schema from file: {0}", SCHEMA_FILE);
+
+            // Parse JSON schema content
+            Schema configSchema;
+            SchemaParser configParser;
+            NlohmannJsonAdapter configSchemaAdapter(configJsonSchema);
+            configParser.populateSchema(configSchemaAdapter, configSchema);
+
+            // Validate the configuration
+            Validator validator;
+            ValidationResults results;
+            NlohmannJsonAdapter configAdapter(this->config);
+            if (!validator.validate(configSchema, configAdapter, &results))
+            {
+                this->log.Error("Configuration in file {0} is not valid.", this->settingsPath);
+
+                // Report the errors
+                ValidationResults::Error error;
+                while (results.popError(error))
+                {
+                    std::string context;
+                    std::vector<std::string>::iterator itr = error.context.begin();
+                    for (; itr != error.context.end(); itr++)
+                    {
+                        context += *itr;
+                    }
+                    this->log.Error("Context: {0}, Description: {1}", context, error.description);
+                }
+            }
+            else
+            {
+                this->log.Info("Configuration is valid.");
+            }
+        }
     }
-	this->log.Info("Loaded configuration from file: {0}", this->settingsPath);
 }
 
 void GdsConnectorComponent::SetupConfig()
@@ -212,41 +275,83 @@ void GdsConnectorComponent::SetupConfig()
     }
     else
     {
-        this->log.Info("Error creating MQTT Client with URL {0} and client name {1}", host, clientName);
+        this->log.Error("Error creating MQTT Client with URL {0} and client name {1}", host, clientName);
     }
 
-    // Assign ConnectOptions
-    json connectOpts = broker["connect_options"];
-    json willOpts = broker["connect_options"]["will_options"];
-    json sslOpts = broker["connect_options"]["ssl_options"];
-
     ConnectOptions opts;
-    opts.keepAliveInterval = connectOpts["keep_alive_interval"].get<int32>();
-    opts.connectTimeout = connectOpts["connect_timeout"].get<int32>();
-    opts.userName = (RscString<512>)(connectOpts["user_name"].is_string() ? connectOpts["user_name"].get<std::string>() : "");
-    opts.password = (RscString<512>)(connectOpts["password"].is_string() ? connectOpts["password"].get<std::string>() : "");
-    opts.maxInflight = connectOpts["max_inflight"].get<int32>();
 
-    opts.willOptions.topic = (RscString<512>)(willOpts["topic"].is_string() ? willOpts["topic"].get<std::string>() : "");
-    opts.willOptions.payload = (RscString<512>)(willOpts["payload"].is_string() ? willOpts["payload"].get<std::string>() : "");
-    opts.willOptions.qos = willOpts["qos"].get<int32>();
-    opts.willOptions.retained = willOpts["retained"].get<boolean>();
+    // Assign ConnectOptions
+    if (broker.contains("connect_options"))
+    {
+        json connectOpts = broker["connect_options"];
 
-    opts.sslOptions.trustStore = (RscString<512>)(sslOpts["trust_store"].is_string() ? sslOpts["trust_store"].get<std::string>() : "");
-    // opts.sslOptions.trustStore = (RscString<512>)(sslOpts["trust_store"].is_string() ?
-    //     "/opt/plcnext/Security/TrustStores/MQTT Servers/trusted/" + sslOpts["trust_store"].get<std::string>() : "");
-    opts.sslOptions.keyStore = (RscString<512>)(sslOpts["key_store"].is_string() ? sslOpts["key_store"].get<std::string>() : "");
-    opts.sslOptions.privateKey = (RscString<512>)(sslOpts["private_key"].is_string() ? sslOpts["private_key"].get<std::string>() : "");
-    opts.sslOptions.privateKeyPassword = (RscString<512>)(sslOpts["private_key_password"].is_string() ? sslOpts["private_key_password"].get<std::string>() : "");
-    opts.sslOptions.enabledCipherSuites = (RscString<512>)(sslOpts["enabled_cypher_suites"].is_string() ? sslOpts["enabled_cypher_suites"].get<std::string>() : "");
-    opts.sslOptions.enableServerCertAuth = sslOpts["enable_server_cert_auth"].get<boolean>();
+        if (connectOpts.contains("keep_alive_interval"))
+            opts.keepAliveInterval = connectOpts["keep_alive_interval"].get<int32>();
+        if (connectOpts.contains("connect_timeout"))
+            opts.connectTimeout = connectOpts["connect_timeout"].get<int32>();
+        if (connectOpts.contains("user_name"))
+            opts.userName = (RscString<512>)connectOpts["user_name"].get<std::string>();
+        if (connectOpts.contains("password"))
+            opts.password = (RscString<512>)connectOpts["password"].get<std::string>();
+        if (connectOpts.contains("max_inflight"))
+            opts.maxInflight = connectOpts["max_inflight"].get<int32>();
 
-    opts.isCleanSession = connectOpts["is_clean_session"].get<boolean>();
-    // // TODO: Implement opts.servers
-    opts.mqttVersion = connectOpts["mqtt_version"].get<int32>();
-    opts.automaticReconnect = connectOpts["automatic_reconnect"].get<boolean>();
-    opts.minRetryInterval = connectOpts["min_retry_interval"].get<int32>();
-    opts.maxRetryInterval = connectOpts["max_retry_interval"].get<int32>();
+        if (broker["connect_options"].contains("will_options"))
+        {
+            json willOpts = broker["connect_options"]["will_options"];
+
+            if (willOpts.contains("topic"))
+                opts.willOptions.topic = (RscString<512>)willOpts["topic"].get<std::string>();
+            if (willOpts.contains("payload"))
+                opts.willOptions.payload = (RscString<512>)willOpts["payload"].get<std::string>();
+            if (willOpts.contains("qos"))
+                opts.willOptions.qos = willOpts["qos"].get<int32>();
+            if (willOpts.contains("retained"))
+                opts.willOptions.retained = willOpts["retained"].get<boolean>();
+        }
+        else
+        {
+            this->log.Info("No MQTT Last Will Options provided. Defaults will be used.");
+        }
+
+        if (broker["connect_options"].contains("ssl_options"))
+        {
+            json sslOpts = broker["connect_options"]["ssl_options"];
+
+            if (sslOpts.contains("trust_store"))
+                opts.sslOptions.trustStore = (RscString<512>)sslOpts["trust_store"].get<std::string>();
+            if (sslOpts.contains("key_store"))
+                opts.sslOptions.keyStore = (RscString<512>)sslOpts["key_store"].get<std::string>();
+            if (sslOpts.contains("private_key"))
+                opts.sslOptions.privateKey = (RscString<512>)sslOpts["private_key"].get<std::string>();
+            if (sslOpts.contains("private_key_password"))
+                opts.sslOptions.privateKeyPassword = (RscString<512>)sslOpts["private_key_password"].get<std::string>();
+            if (sslOpts.contains("enabled_cipher_suites"))
+                opts.sslOptions.enabledCipherSuites = (RscString<512>)sslOpts["enabled_cipher_suites"].get<std::string>();
+            if (sslOpts.contains("enable_server_cert_auth"))
+                opts.sslOptions.enableServerCertAuth = sslOpts["enable_server_cert_auth"].get<boolean>();
+        }
+        else
+        {
+            this->log.Info("No MQTT SSL/TLS Options provided. Defaults will be used.");
+        }
+
+        if (connectOpts.contains("is_clean_session"))
+            opts.isCleanSession = connectOpts["is_clean_session"].get<boolean>();
+            // // TODO: Implement opts.servers
+        if (connectOpts.contains("mqtt_version"))
+            opts.mqttVersion = connectOpts["mqtt_version"].get<int32>();
+        if (connectOpts.contains("automatic_reconnect"))
+            opts.automaticReconnect = connectOpts["automatic_reconnect"].get<boolean>();
+        if (connectOpts.contains("min_retry_interval"))
+            opts.minRetryInterval = connectOpts["min_retry_interval"].get<int32>();
+        if (connectOpts.contains("max_retry_interval"))
+            opts.maxRetryInterval = connectOpts["max_retry_interval"].get<int32>();
+    }
+    else
+    {
+        this->log.Info("No MQTT Connect Options provided. Defaults will be used.");
+    }
 
     // Connect to the MQTT client
     int32 mqttResponse = this->pMqttClientService->Connect(this->mqttClientId, opts);
@@ -256,7 +361,7 @@ void GdsConnectorComponent::SetupConfig()
     }
     else
     {
-        this->log.Info("Error connecting to MQTT Client {0}", this->mqttClientId);
+        this->log.Error("Error connecting to MQTT Client {0}", this->mqttClientId);
     }
 
     // Check all GDS ports for existence
@@ -279,7 +384,7 @@ void GdsConnectorComponent::SetupConfig()
         }
         else if (!IsSupported(portData.Value.GetType()))
         {
-            this->log.Info("Port {0} data type is not currently supported.", portName);
+            this->log.Warning("Port {0} data type is not currently supported.", portName);
             // Delete this port from the settings.
             publishData->erase(it);
             --it;  // because the iterator is incremented by the erase method.
@@ -306,7 +411,7 @@ void GdsConnectorComponent::SetupConfig()
             }
             else if (!IsSupported(portData.Value.GetType()))
             {
-                this->log.Info("Port {0} data type is not currently supported.", portName);
+                this->log.Warning("Port {0} data type is not currently supported.", portName);
                 // Delete this port from the settings.
                 publishData->erase(it2);
                 --it2;  // because the iterator is incremented by the erase method.
@@ -332,12 +437,12 @@ void GdsConnectorComponent::SetupConfig()
             }
             else
             {
-                this->log.Info("Error subscribing to MQTT topic {0}", topic);
+                this->log.Error("Error subscribing to MQTT topic {0}", topic);
             }
         }
         else
         {
-            this->log.Info("MQTT Client is not connected. Cannot subscribe topic {0}", topic);
+            this->log.Error("MQTT Client is not connected. Cannot subscribe topic {0}", topic);
         }
     }
 
@@ -349,13 +454,14 @@ void GdsConnectorComponent::SetupConfig()
 void GdsConnectorComponent::ResetConfig()
 {
     // implement this inverse to SetupConfig() and LoadConfig()
-	this->updateThread.Stop();
-	this->log.Info("ResetConfig(): Worker thread has been stopped.");
+	this->log.Info("ResetConfig()");
 }
 
 void GdsConnectorComponent::Dispose()
 {
     // implement this inverse to SetupSettings(), LoadSettings() and Initialize()
+    this->pMqttClientService->Disconnect(this->mqttClientId, 1000);
+    this->pMqttClientService->DestroyClient(this->mqttClientId);
 	this->updateThread.Stop();
 	this->log.Info("Dispose(): Worker thread has been stopped.");
 }
@@ -390,7 +496,7 @@ void GdsConnectorComponent::Update()
                 int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
                 if (response != 0)
                 {
-                    this->log.Info("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                    this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
                 }
             }
         }
@@ -400,7 +506,7 @@ void GdsConnectorComponent::Update()
     // Loop until the queue is empty.
     // TODO: Put a limit on this loop!
     // TODO: Consider consolidating all messages and writing all together using the Write() method
-    //    ... that we can also write arrays and ... structs?
+    //    ... so that we can also write arrays and ... structs?
     Message msg;
 
     if (this->pMqttClientService->IsConnected(this->mqttClientId))
@@ -431,7 +537,7 @@ void GdsConnectorComponent::Update()
                         DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
                         if (result != DataAccessError::None)
                         {
-                            this->log.Info("Error writing to port {0}: {1}", it2.value(), result);
+                            this->log.Error("Error writing to port {0}: {1}", it2.value(), result);
                         }
                     }
                 }

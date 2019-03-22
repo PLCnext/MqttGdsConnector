@@ -8,6 +8,7 @@ a) ARPVERSION=${OPTARG};;
 n) TARGETNAME=${OPTARG};;
 esac
 done
+
 VERSION=$(echo $ARPVERSION | grep -oP [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
 echo "Version:${VERSION}"
 
@@ -25,12 +26,13 @@ cmake \
 -D BUILD_SHARED_LIBS=ON \
 -D CMAKE_TOOLCHAIN_FILE="${TOOLCHAIN}/toolchain.cmake" \
 -D ARP_TOOLCHAIN_ROOT="${TOOLCHAIN}" \
--D ARP_DEVICE=AXCF2152 \
--D ARP_DEVICE_VERSION="${ARPVERSION}" \
--D JSON_BuildTests=OFF \
--D JSON_MultipleHeaders=OFF \
--S "${DIR}/../external/json" \
--B "${DIR}/../build/external/json/${TARGETNAME}_${VERSION}"
+-D ARP_DEVICE=${TARGETNAME} \
+-D "ARP_DEVICE_VERSION=${ARPVERSION}" \
+-D valijson_INSTALL_HEADERS=ON \
+-D valijson_BUILD_EXAMPLES=OFF \
+-D valijson_BUILD_TESTS=OFF \
+-S "${DIR}/../external/valijson" \
+-B "${DIR}/../build/external/valijson/${TARGETNAME}_${VERSION}"
 
-cmake --build "${DIR}/../build/external/json/${TARGETNAME}_${VERSION}"
-cmake --build "${DIR}/../build/external/json/${TARGETNAME}_${VERSION}" --target install
+cmake --build "${DIR}/../build/external/valijson/${TARGETNAME}_${VERSION}"
+cmake --build "${DIR}/../build/external/valijson/${TARGETNAME}_${VERSION}" --target install

@@ -23,14 +23,17 @@ target_include_directories(GdsConnector
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/intermediate/code>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<BUILD_INTERFACE:${CMAKE_PREFIX_PATH}>/include)
+    $<BUILD_INTERFACE:${CMAKE_PREFIX_PATH}/include>
+    $<BUILD_INTERFACE:${CMAKE_PREFIX_PATH}/include/nlohmann>
+    )
 
 #######################################################################################
 
 ################# include arp cmake module path #######################################
 
 list(INSERT CMAKE_MODULE_PATH 0 "${ARP_TOOLCHAIN_CMAKE_MODULE_PATH}")
-
+list(APPEND CMAKE_MODULE_PATH  "${MQTTCLIENTLOCATION}/lib/cmake")
+list(APPEND CMAKE_MODULE_PATH  "${MQTTCLIENTLOCATION}/Release/lib/cmake")
 #######################################################################################
 
 ################# set link options ####################################################
@@ -48,7 +51,17 @@ target_link_options(GdsConnector PRIVATE LINKER:--no-undefined)
 find_package(ArpDevice REQUIRED)
 find_package(ArpProgramming REQUIRED)
 
-target_link_libraries(GdsConnector PRIVATE ArpDevice ArpProgramming libMqttClient.so)
+find_library(Mqtt_Client
+            NAMES
+            libPxceTcs.Mqtt.Client.so
+            PxceTcs.Mqtt.Client
+            PATHS
+            ${CMAKE_PREFIX_PATH}/lib
+            ${CMAKE_PREFIX_PATH}/Release/lib
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            NO_CMAKE_FIND_ROOT_PATH)
+message(STATUS "${Mqtt_Client}")
+target_link_libraries(GdsConnector PRIVATE ArpDevice ArpProgramming ${Mqtt_Client})
 
 #######################################################################################
 

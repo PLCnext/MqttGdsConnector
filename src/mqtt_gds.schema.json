@@ -1,0 +1,176 @@
+{
+  "type": "object",
+  "properties": {
+    "brokers": {
+      "type" : "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "client_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "connect_options": {
+            "type": "object",
+            "properties": {
+              "keep_alive_interval": {
+                "type": "integer"
+              },
+              "connect_timeout": {
+                "type": "integer"
+              },
+              "username": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "password":  {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "max_inflight": {
+                "type": "integer"
+              },
+              "is_clean_session": {
+                "type": "boolean"
+              },
+              "mqtt_version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              "automatic_reconnect": {
+                "type": "boolean"
+              },
+              "min_retry_interval": {
+                "type": "integer"
+              },
+              "max_retry_interval": {
+                "type": "integer"
+              },
+              "will_options": {
+                "type": "object",
+                "properties": {
+                  "topic": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "payload": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "qos": {
+                    "type": "integer"
+                  },
+                  "retained": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "ssl_options": {
+                "type": "object",
+                "properties": {
+                  "trust_store": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "key_store": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "private_key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "private_key_password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "enabled_cipher_suites": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "enable_server_cert_auth": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "publish_data":
+          {
+            "type" : "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "port": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "qos": {
+                  "type": "integer"
+                },
+                "retained": {
+                  "type": "boolean"
+                },
+                "topics" : {
+                  "type" : "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                }
+              },
+              "required": ["port","qos","retained","topics"]
+            }
+          },
+          "subscribe_data":
+          {
+            "type" : "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "topic": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "ports" : {
+                  "type" : "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                }
+              },
+              "required": ["topic","ports"]
+            }
+          }
+        },
+        "required": ["host","client_name"]
+      }
+    }
+  },
+  "required": ["brokers"]
+}

@@ -1,16 +1,18 @@
-﻿#include "GdsConnectorLibrary.hpp"
-#include "Arp/System/Core/CommonTypeName.hxx"
+﻿///////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright PHOENIX CONTACT Electronics GmbH
+//
+///////////////////////////////////////////////////////////////////////////////
+#include "GdsConnectorLibrary.hpp"
 #include "GdsConnectorComponent.hpp"
 
 namespace PxceTcs { namespace Mqtt
 {
 
 GdsConnectorLibrary::GdsConnectorLibrary(AppDomain& appDomain)
-    : MetaLibraryBase(appDomain, ARP_VERSION_CURRENT, typeDomain)
-    , typeDomain(CommonTypeName<GdsConnectorLibrary>().GetNamespace())
+    : LibraryBase(appDomain, ARP_VERSION_CURRENT)
 {
     this->componentFactory.AddFactoryMethod(CommonTypeName<::PxceTcs::Mqtt::GdsConnectorComponent>(), &::PxceTcs::Mqtt::GdsConnectorComponent::Create);
-    this->InitializeTypeDomain();
 }
 
 void GdsConnectorLibrary::Main(AppDomain& appDomain)
