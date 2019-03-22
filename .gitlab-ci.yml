@@ -1,0 +1,144 @@
+stages:
+ - test
+ - PLCnextBuildC
+ - PLCnextBuildCpp
+ - PLCnextBuildLibrary
+ - deploy
+
+variables:
+  SDK_PATH: "/home/sdks/axcf2152/2019.0"
+  TARGET_NAME: "2019.0 LTS (19.0.0.17548  )"
+
+
+
+.RunnerRequirements:
+ before_script:
+  - chmod +x tools/*
+  - ls -la /usr/local/bin/
+  - ln -s /usr/local/bin/cmake/bin/cmake /usr/bin/cmake
+  - ln -s /usr/local/bin/cmake/bin/ccmake /usr/bin/ccmake
+  - ln -s /usr/local/bin/cmake/bin/cpack /usr/bin/cpack
+  - ln -s /usr/local/bin/cmake/bin/ctest /usr/bin/ctest
+  - which cmake
+  - cmake --version
+  - which make
+  - make --version
+  - which plcncli
+  - plcncli --version
+  - plcncli get sdks
+  - plcncli get targets
+  - apt-get update
+  - apt-get install ninja-build
+  #- |
+  #  echo "get sdks:"
+  #  sdkstring=$(plcncli get sdks)
+  #  echo "sdkstring found:"
+  #  echo $sdkstring
+  #  echo "seperate strings into array:"
+  #  IFS='-'
+  #  read -r -a array -d 'EOF' <<< "$sdkstring" 2> error.log
+  #  cat error.log
+  #  for ele in "${array[@]}"
+  #  do
+  #      echo $ele
+  #  done
+  #  SDKpath+=(${array[1]//[[:space:][:blank:]]/})
+  #  echo $SDKpath
+ tags:
+  - docker
+  - debian-based
+ allow_failure: true
+
+Preperation:
+ image: $SDK_IMAGE
+ stage: test
+ extends: .RunnerRequirements
+ script:
+  - mkdir -p external
+  - set +e
+  - ls -la external/*
+  - git clone -q https://github.com/nlohmann/json.git external/json
+  - cd external/json
+  - ls -la
+  - git status || git init
+  - git fetch --tags
+  - git checkout v1.3.0
+  - set -e
+ cache:
+  key: prepareJson
+  paths:
+    - external/json
+ artifacts:
+  paths:
+   - external/json
+
+#################################################
+#################################################
+#################################################
+######PLCnext Building###########################
+BuildJson:
+ stage: PLCnextBuild
+ image: $SDK_IMAGE
+ extends: .RunnerRequirements
+ dependencies:
+  - Preperation
+ script:
+  - mkdir -p external/deploy
+  - ls -la external/deploy
+  - tools/build-json.sh -t $SDK_PATH -a $TARGET_NAME
+  - ls -la external/deploy
+ cache:
+  key: buildJson
+  paths:
+  - external/deploy
+ artifacts:
+   paths:
+   - external/deploy
+
+
+BuildComponent:
+ stage: PLCnextBuildLibrary
+ image: $SDK_IMAGE
+ extends: .RunnerRequirements
+ dependencies:
+  - BuildJson
+ script:
+ - DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ - ls -la $DIR
+ - set +e
+ -  export TOOLCHAIN_TARGET_SYSROOT="${SDK_PATH}/sysroots/cortexa9t2hf-neon-pxc-linux-gnueabi",
+ -  export TOOLCHAIN_NATIVE_SYSROOT="${SDK_PATH}/sysroots/x86_64-pokysdk-linuxeabi",
+ -  export CXX="${SDK_PATH}/sysroots/x86_64-pokysdk-linuxeabi/usr/bin/arm-pxc-linux-gnueabi/arm-pxc-linux-gnueabi-g++",
+ -  export CXXFLAGS="--sysroot=${SDK_PATH}/sysroots/cortexa9t2hf-neon-pxc-linux-gnueabi -march=armv7-a -mthumb -mfpu=neon -mfloat-abi=hard -mcpu=cortex-a9"
+ - |
+    /usr/bin/cmake --configure -G "Ninja" \
+    -DBUILD_TESTING=OFF \
+    -DUSE_ARP_DEVICE=ON \
+    -DCMAKE_STAGING_PREFIX=${DIR}/bin/axcf2152 \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_PREFIX_PATH="${DIR}/external/deploy/axcf2152" \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DARP_TOOLCHAIN_ROOT=${SDK_PATH} \
+    -DARP_DEVICE="AXCF2152" \
+    -DARP_DEVICE_VERSION="${TARGET_NAME}" \
+    -DCMAKE_TOOLCHAIN_FILE="${SDK_PATH}/toolchain.cmake" \
+    -S . \
+    -B ${DIR}/build/external/axcf2152-2019.0
+ - |
+    cmake --build ${DIR}/build/external/axcf2152-2019.0 \
+    --config Debug \
+    --target all -- -j 3
+ - |
+    cmake --build ${DIR}/build/external/axcf2152-2019.0 \
+    --config Debug --target install -- -j 3
+ - set -e
+ - cd ${DIR}/build/external/axcf2152-2019.0
+ artifacts:
+  name: "$CI_COMMIT_REF_SLUG"
+  when: always
+  expire_in: 1 hour
+  paths:
+   - bin/
+   - build/
+   - external/deploy
+

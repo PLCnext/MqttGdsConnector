@@ -1,0 +1,105 @@
+{
+  "brokers":
+  [
+    {
+      "host": "tcp://test.mosquitto.org:1883",
+      "client_name": "PxcTest",
+      "connect_options":
+      {
+          "keep_alive_interval": 30,
+          "connect_timeout": 30,
+          "username": "",
+          "password": "",
+          "max_inflight": 0,
+          "will_options":
+          {
+            "topic": "last_will_topic",
+            "payload": "auf wiedersehen",
+            "qos": 0,
+            "retained": false
+          },
+          "ssl_options":
+          {
+            "trust_store": "/usr/local/lib/mosquitto.org.crt",
+            "key_store": "/usr/local/lib/client.crt",
+            "private_key": "/usr/local/lib/client.key",
+            "private_key_password": "FastJ3denTag",
+            "enabled_cypher_suites": "",
+            "enable_server_cert_auth": true
+          },
+          "is_clean_session": true,
+          "servers":
+          [
+          ],
+          "mqtt_version": 0,
+          "automatic_reconnect": false,
+          "min_retry_interval": 0,
+          "max_retry_interval": 0
+      },
+      "publish_data":
+      [
+        {
+          "port"      : "Arp.Plc.Eclr/MainInstance.PubReal",
+          "qos": 0,
+          "retained": false,
+          "topics"    :
+          [
+            "pxc_hello",
+            "pxc_REAL"
+          ]
+        },
+        {
+          "port"      : "Arp.Plc.Eclr/MainInstance.PubString",
+          "qos": 0,
+          "retained": false,
+          "topics" :
+          [
+            "pxc_hello",
+            "pxc_STRING"
+          ]
+        },
+        {
+          "port"   : "Arp.Plc.Eclr/MainInstance.PubInt",
+          "qos": 0,
+          "retained": false,
+          "topics" :
+          [
+            "pxc_hello",
+            "pxc_INT"
+          ]
+        }
+      ],
+      "subscribe_data":
+      [
+        {
+          "topic" : "pxc_REAL",
+          "qos": 0,
+          "retained": false,
+          "ports" :
+          [
+            "Arp.Plc.Eclr/MainInstance.SubReal"
+          ]
+        },
+        {
+          "topic" : "pxc_STRING",
+          "qos": 0,
+          "retained": false,
+          "ports" :
+          [
+            "Arp.Plc.Eclr/MainInstance.SubString"
+          ]
+        },
+        {
+          "topic" : "pxc_INT",
+          "qos": 0,
+          "retained": false,
+          "ports" :
+          [
+            "Arp.Plc.Eclr/MainInstance.SubInt",
+            "Arp.Plc.Eclr/MainInstance.SubInt2"
+          ]
+        }
+      ]
+    }
+  ]
+}
