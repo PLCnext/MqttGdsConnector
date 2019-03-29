@@ -1,31 +1,28 @@
-# PLCnext Technology - MQTT GDS Connector
+# PLCnext Technology - MQTT Client
 
-[![Feature Requests](https://img.shields.io/github/issues/PLCnext/mqtt_gds_connector/feature-request.svg)](https://github.com/PLCnext/mqtt_gds_connector/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-[![Bugs](https://img.shields.io/github/issues/PLCnext/mqtt_gds_connector/bug.svg)](https://github.com/PLCnext/mqtt_gds_connector/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Web](https://img.shields.io/badge/PLCnext-Website-blue.svg)](https://www.phoenixcontact.com/plcnext)
-[![Community](https://img.shields.io/badge/PLCnext-Community-blue.svg)](https://www.plcnext-community.net)
+| Date       | Version |
+|:---------- | -------:|
+| 29.03.2019 | 1.0.0   |
 
-| Date       | Version | Author       |
-|------------|---------|--------------|
-| 29.03.2019 | 1.0.0   | Martin Boers |
+
+## IMPORTANT NOTE
+
+Installing or uninstalling this Function Extension will automatically restart the PLC.
 
 
 ## Description
 
-MQTT GDS Connector is a PLCnext Technology component that that exchanges data between Global Data Space (GDS) ports and MQTT server topics. The component is configured with the file `mqtt_gds.settings.json`. Data in this file must conform to a defined JSON schema.
-
-The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target. 
+MQTT Client is a PLCnext Technology Function Extension that exchanges data between Global Data Space (GDS) ports and MQTT server topics.
 
 
 ## Requirements
 
-This component is designed for the AXC F 2152 controller with minimum firmware version 2019.3.
+This Function Extension is designed for the AXC F 2152 controller with minimum firmware version 2019.3.
 
 
 ## Features
 
-The component can connect to a single MQTT broker using TCP or WebSockets, over an unencrypted or an encrypted (SSL/TLS) connection.
+The Function Extension connects to a single MQTT broker over an unencrypted or encrypted (SSL/TLS) connection.
 
 Only one client, and one concurrent server connection, is currently supported.
 
@@ -43,48 +40,8 @@ When subscribing to 'String' data, incoming message payloads must always include
 
 Complex data types (including Arrays and Structures) are not currently supported.
 
-
-## Contributing
-
-Contributions to this project are welcome.
-
-## Building from source
-
-Building from source requires the PLCnext SDK for your target. It is strongly recommended that you use the PLCnext Command Line Interface (CLI) to install and manage PLCnext SDKs on your host. Assistance with this is available from the [PLCnext Community]((https://plcnext-community.net)).
-
-An example of a build session is as follows:
-
-```
-$ git clone https://github.com/PLCnext/MqttGdsConnector
-$ cd MqttGdsConnector
-$ cmake -G "Ninja" 
-> -DCMAKE_TOOLCHAIN_FILE=/opt/pxc/sdk/AXCF2152/2019.3/toolchain.cmake
-> -DBUILD_TESTING=OFF
-> -DUSE_ARP_DEVICE=ON
-> -DCMAKE_STAGING_PREFIX=/home/tcs-user/Documents/projects/MqttGdsConnector/bin/axcf2152
-> -DCMAKE_INSTALL_PREFIX=/usr/local
-> -DCMAKE_PREFIX_PATH=/home/tcs-user/Documents/projects/MqttGdsConnector/external/deploy/axcf2152
-> -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-> -DARP_TOOLCHAIN_ROOT=/opt/pxc/sdk/AXCF2152/2019.3
-> -DARP_DEVICE=AXCF2152 "-DARP_DEVICE_VERSION=2019.3 (19.3.0.18161)"
-> -S . -B ./build/axcf2152-2019.3
-$ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf2152-2019.3 --config Debug --target all -- -j 3
-$ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf2152-2019.3 --config Debug --target install -- -j 3
-```
-
-## Installing
-
-Copy the contents of `external/deploy/axcf2152` to `/usr/local` on the target.
-
-Copy `libGdsConnector.so` to `/usr/local/lib` on the target.
-
-Copy `libs/MqttGdsConnector.acf.config` to `/opt/plcnext/projects/Default` on the target.
-
-Copy the file `mqtt_gds.schema.json` to `/opt/plcnext/apps/60002172000048/` on the target.
-
-Copy a valid configuration file named `mqtt_gds.settings.json` to `/opt/plcnext/projects/MqttClient` on the target.
-
-Reboot the target.
+Client-side message persistence has not been implemented in this version.
+<div class="page"></div>
 
 ## Quick start
 
@@ -145,7 +102,11 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
 
    Make sure that the file has 'read' privileges for all users on the PLC.
 
-1. Restart the PLC.
+1. Using a web browser, log in to the [PLCnext Store](https://www.plcnextstore.com) and check that your PLC is registered on your account:
+   - Select your use name (top right), and select "PROFILE".
+   - If your PLC does not appear in the "Devices" list, select the "+ new device" button and follow the registration process. The Device ID can be found in the "Proficloud" section of the Web Based Management page on the PLC.
+
+1. Install the ["MQTT Client"](https://www.plcnextstore.com/#/44) Function Extension from the PLCnext Store.
 
 1. In the MQTTool app on the iPhone or iPad, subscribe to the topic name that was entered in the `publish_data` section of the configuration file (e.g. "MyPubTopic").
 
@@ -153,10 +114,13 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
 
 1. On the iPhone or iPad, publish a message to the topic that was entered in the `subscribe_data` section of the configuration file (e.g. "MySubTopic"). This message now appears as the value of the SubMessage variable in the PLC.
 
+You are now ready to create an MQTT Client configuration for your own application.
+<div style="page-break-after: always;"></div>
+
 
 ## Configuration reference
 
-The MQTT GDS Client is configured with the file `mqtt_gds.settings.json`. This file must be located in the following directory on the PLC:
+The MQTT Client is configured with the file `mqtt_gds.settings.json`. This file must be located in the following directory on the PLC:
 
 `/opt/plcnext/projects/MqttClient/`
 
@@ -169,7 +133,7 @@ After modifying any of these files, the PLCnext Runtime must be restarted.
 
 ### Configuration file details
 
-The configuration file `mqtt_gds.settings.json` must comply with the JSON schema defined in the file `mqtt_gds.schema.json`. This schema file must be located in the following directory on the PLC:
+The configuration file `mqtt_gds.settings.json` must comply with the JSON schema defined in the file `mqtt_gds.schema.json`. After installing the MQTT Client Function Extension, this schema file can be found in the following directory on the PLC:
 
 `/opt/plcnext/apps/60002172000048/`
 
@@ -280,12 +244,28 @@ Note:
 
 ### Configuration examples
 
-Examples of configuration files that you can use as a starting point for your own project are available [here](XXX). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
+Examples of configuration files that you can use as a starting point for your own project are available [here](www.github.com/PLCnext/MqttGdsConnector/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
 
 
 ## Known issues
 
 If the connection to the broker is lost, the client will attempt to reconnect, but will eventually give up. In this case, the PLC must be restarted in order to trigger more connection attempts.
+
+
+## Source code
+
+This Function Extension uses two PLCnext Technology components. The source code for these components is available on Github:
+- [MQTT Client](www.github.com/PLCnext/MqttClient)
+- [MQTT GDS Connector](www.github.com/PLCnext/MqttGdsConnector)
+
+Community contributions to these open-source projects are welcome.
+
+
+## Support and Feature Requests
+
+Please raise any relevant issues on the MQTT GDS Connector Github project. [PLCnext Github site](www.github.com/PLCnext/MqttGdsConnector).
+
+For general support and further information on PLCnext Technology, please visit the [PLCnext Community website](https://plcnext-community.net).
 
 -----------
 
