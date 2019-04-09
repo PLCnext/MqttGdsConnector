@@ -25,7 +25,7 @@ ${DIR}/../tools/prepare-mqtt-client.sh
 echo build MqttClient app with pahoC an PahoCpp
 chmod +x ${DIR}/../external/mqttclient/tools/build-*.sh
 ${DIR}/../external/mqttclient/tools/build-all.sh -t "${TOOLCHAIN}" -a "${ARPVERSION}" -n "${TARGETNAME}"
-cp -R -f ${DIR}/../external/mqttclient/deploy/* ${DIR}/../deploy
+cp -R -f ${DIR}/../external/mqttclient/deploy ${DIR}/../
 
 echo build Json
 ${DIR}/../tools/build-json.sh -t "${TOOLCHAIN}" -a "${ARPVERSION}" -n "${TARGETNAME}"
