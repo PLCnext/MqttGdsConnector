@@ -8,7 +8,7 @@
 
 | Date       | Version | Author       |
 |------------|---------|--------------|
-| 29.03.2019 | 1.0.0   | Martin Boers |
+| 29.03.2019 | 1.0.2   | Martin Boers |
 
 
 ## Description
@@ -249,8 +249,8 @@ publish_data must be an array of objects with the following properties:
 Name     | Required | JSON type        | Description
 :---     | :---     | :---             | :---
 port     | Yes      | string           | The 'OUT' port from which data will be published<sup>1</sup>.
-qos      | No       | integer          | The message Quality of Service.
-retained | No       | boolean          | Tell the broker to keep messages after send to subscribers.
+qos      | Yes      | integer          | The message Quality of Service.
+retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers.
 topics   | Yes      | array of strings | Message are published to all these topics.
 
 Note:
@@ -280,7 +280,7 @@ Note:
 
 ### Configuration examples
 
-Examples of configuration files that you can use as a starting point for your own project are available [here](XXX). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
+Examples of configuration files that you can use as a starting point for your own project are available [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
 
 
 ## Known issues
