@@ -22,7 +22,7 @@ ${DIR}/../tools/prepare-valijson.sh
 echo prepare mqtt-client
 ${DIR}/../tools/prepare-mqtt-client.sh
 
-echo build MqttClient app with pahoC an PahoCpp
+echo build MqttClient Component with pahoC and PahoCpp
 ${DIR}/../tools/build-mqtt-client.sh -t "${TOOLCHAIN}" -a "${ARPVERSION}" -n "${TARGETNAME}"
 
 echo build Json

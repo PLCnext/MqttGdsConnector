@@ -4,7 +4,6 @@
 #// SPDX-License-Identifier: MIT
 #//
 stages:
- - prepare
  - PLCnextBuild
  - PLCnextBuildLibrary
  - PLCnextBuildAll
@@ -44,45 +43,15 @@ variables:
   - debian-based
  allow_failure: false
 
-PreperationJson:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-json.sh
- cache:
-  key: prepareJson
-  paths:
-    - external/json
-
-PreperationJsonValidation:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-valijson.sh
- cache:
-  key: prepareValiJson
-  paths:
-    - external/valijson
-
-PrepareMqttClient:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-mqtt-client.sh
- cache:
-  key: prepareMqttClient
-  paths:
-    - external/mqttclient
-  #################################################
+#################################################
 #################################################
 #################################################
 ######PLCnext Building###########################
 BuildJson:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PreperationJson
  script:
+  - tools/prepare-json.sh
   - tools/build-json.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareJson
@@ -96,9 +65,8 @@ BuildJson:
 BuildValiJson:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PreperationJsonValidation
  script:
+  - tools/prepare-valijson.sh
   - tools/build-valijson.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareValiJson
@@ -112,9 +80,8 @@ BuildValiJson:
 BuildMqttClient:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PrepareMqttClient
  script:
+  - tools/prepare-mqtt-client.sh
   - tools/build-mqtt-client.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareMqttClient
