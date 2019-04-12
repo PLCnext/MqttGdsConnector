@@ -20,14 +20,11 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-<<<<<<< HEAD
 #define APP_ID "60002172000048"  // The unique ID for this app in the PLCnext Store
 #define SCHEMA_FILE_PATH "$ARP_ACTIVE_APPS_DIR$/" APP_ID
 #define SCHEMA_FILE_NAME "mqtt_gds.schema.json"
 #define SCHEMA_FILE SCHEMA_FILE_PATH "/" SCHEMA_FILE_NAME
 
-=======
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
 namespace PxceTcs { namespace Mqtt
 {
 
