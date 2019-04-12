@@ -83,7 +83,7 @@ BuildJson:
  dependencies:
   - PreperationJson
  script:
-  - tools/build-json.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/build-json.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareJson
   paths:
@@ -99,7 +99,7 @@ BuildValiJson:
  dependencies:
   - PreperationJsonValidation
  script:
-  - tools/build-valijson.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/build-valijson.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareValiJson
   paths:
@@ -115,7 +115,7 @@ BuildMqttClient:
  dependencies:
   - PrepareMqttClient
  script:
-  - tools/build-mqtt-client.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/build-mqtt-client.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareMqttClient
   paths:
@@ -131,7 +131,7 @@ BuildComponent:
  dependencies:
   - BuildJson
  script:
-  - tools/build-component.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/build-component.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  artifacts:
   name: "$CI_COMMIT_REF_SLUG"
   when: always
