@@ -42,7 +42,7 @@ variables:
  tags:
   - docker
   - debian-based
- allow_failure: true
+ allow_failure: false
 
 PreperationJson:
  stage: prepare
@@ -117,7 +117,7 @@ BuildMqttClient:
  script:
   - tools/build-mqtt-client.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
  cache:
-  key: BuildMqttClient
+  key: prepareMqttClient
   paths:
   - external/
  artifacts:

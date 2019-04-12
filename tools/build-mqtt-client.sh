@@ -14,6 +14,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 
 echo build MqttClient app with pahoC an PahoCpp
+ls -la ${DIR}/../external/mqttclient/
 chmod +x ${DIR}/../external/mqttclient/tools/build-*.sh
 ${DIR}/../external/mqttclient/tools/build-all.sh -t "${TOOLCHAIN}" -a "${ARPVERSION}" -n "${TARGETNAME}"
 cp -R -f ${DIR}/../external/mqttclient/deploy ${DIR}/../
