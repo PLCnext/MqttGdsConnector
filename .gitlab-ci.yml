@@ -7,6 +7,7 @@ stages:
  - prepare
  - PLCnextBuild
  - PLCnextBuildLibrary
+ - PLCnextBuildAll
  - deploy
 
 
@@ -140,3 +141,13 @@ BuildComponent:
    - build/
    - external/deploy
 
+BuildAll:
+ stage: PLCnextBuildAll
+ extends: .RunnerRequirements
+ script:
+  - tools/build-automatic-all.sh
+ artifacts:
+  name: "$CI_COMMIT_REF_SLUG"
+  when: on_success
+  paths:
+   - deploy
