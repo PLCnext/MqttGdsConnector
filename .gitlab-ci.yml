@@ -130,6 +130,8 @@ BuildComponent:
  extends: .RunnerRequirements
  dependencies:
   - BuildJson
+  - BuildValiJson
+  - BuildMqttClient
  script:
   - tools/build-component.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  artifacts:
