@@ -4,9 +4,9 @@
 #// SPDX-License-Identifier: MIT
 #//
 stages:
- - prepare
  - PLCnextBuild
  - PLCnextBuildLibrary
+ - PLCnextBuildAll
  - deploy
 
 
@@ -41,48 +41,18 @@ variables:
  tags:
   - docker
   - debian-based
- allow_failure: true
+ allow_failure: false
 
-PreperationJson:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-json.sh
- cache:
-  key: prepareJson
-  paths:
-    - external/json
-
-PreperationJsonValidation:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-valijson.sh
- cache:
-  key: prepareValiJson
-  paths:
-    - external/valijson
-
-PrepareMqttClient:
- stage: prepare
- extends: .RunnerRequirements
- script:
-  - tools/prepare-mqtt-client.sh
- cache:
-  key: prepareMqttClient
-  paths:
-    - external/mqttclient
-  #################################################
+#################################################
 #################################################
 #################################################
 ######PLCnext Building###########################
 BuildJson:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PreperationJson
  script:
-  - tools/build-json.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/prepare-json.sh
+  - tools/build-json.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareJson
   paths:
@@ -90,15 +60,14 @@ BuildJson:
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildValiJson:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PreperationJsonValidation
  script:
-  - tools/build-valijson.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/prepare-valijson.sh
+  - tools/build-valijson.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
   key: prepareValiJson
   paths:
@@ -106,37 +75,46 @@ BuildValiJson:
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildMqttClient:
  stage: PLCnextBuild
  extends: .RunnerRequirements
- dependencies:
-  - PrepareMqttClient
  script:
-  - tools/build-mqtt-client.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/prepare-mqtt-client.sh
+  - tools/build-mqtt-client.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  cache:
-  key: BuildMqttClient
+  key: prepareMqttClient
   paths:
   - external/
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildComponent:
  stage: PLCnextBuildLibrary
  extends: .RunnerRequirements
  dependencies:
   - BuildJson
+  - BuildValiJson
+  - BuildMqttClient
  script:
-  - tools/build-component.sh -t ${SDK_PATH} -a ${TARGET_VERSION} -n ${TARGET_NAME}
+  - tools/build-component.sh -t "${SDK_PATH}" -a "${TARGET_VERSION}" -n "${TARGET_NAME}"
  artifacts:
   name: "$CI_COMMIT_REF_SLUG"
   when: always
   expire_in: 1 hour
   paths:
-   - bin/
-   - build/
-   - external/deploy
+  - deploy/
 
+BuildAll:
+ stage: PLCnextBuildAll
+ extends: .RunnerRequirements
+ script:
+  - tools/build-automatic-all.sh
+ artifacts:
+  name: "$CI_COMMIT_REF_SLUG"
+  when: on_success
+  paths:
+   - deploy/

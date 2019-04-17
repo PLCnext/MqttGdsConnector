@@ -8,7 +8,7 @@ a) ARPVERSION=${OPTARG};;
 n) TARGETNAME=${OPTARG};;
 esac
 done
-VERSION=$(echo $ARPVERSION | grep -oP [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
+VERSION=$(echo $ARPVERSION | grep -oP [0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)
 echo "Version:${VERSION}"
 
 # Get the directory of this script
@@ -26,17 +26,17 @@ cmake --configure -G "Ninja" \
 -DCMAKE_INSTALL_PREFIX=/usr/local \
 -DCMAKE_PREFIX_PATH="${DIR}/../deploy/${TARGETNAME}_${VERSION}" \
 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
--DARP_TOOLCHAIN_ROOT=${TOOLCHAIN} \
--DARP_DEVICE="${TARGETNAME}" \
--DARP_DEVICE_VERSION="${ARPVERSION}" \
--DCMAKE_TOOLCHAIN_FILE="${TOOLCHAIN}/toolchain.cmake" \
+"-DARP_TOOLCHAIN_ROOT=${TOOLCHAIN}" \
+"-DARP_DEVICE=${TARGETNAME}" \
+"-DARP_DEVICE_VERSION=${ARPVERSION}" \
+"-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}/toolchain.cmake" \
 -S "${DIR}/../." \
--B "${DIR}/../build/external/${TARGETNAME}_${VERSION}"
+-B "${DIR}/../build/${TARGETNAME}_${VERSION}"
 
-cmake --build "${DIR}/../build/external/${TARGETNAME}_${VERSION}" \
+cmake --build "${DIR}/../build/${TARGETNAME}_${VERSION}" \
 --config Debug \
 --target all -- -j 3
 
-cmake --build "${DIR}/../build/external/${TARGETNAME}_${VERSION}" \
+cmake --build "${DIR}/../build/${TARGETNAME}_${VERSION}" \
 --config Debug --target install -- -j 3
 
