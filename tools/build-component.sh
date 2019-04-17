@@ -31,12 +31,12 @@ cmake --configure -G "Ninja" \
 "-DARP_DEVICE_VERSION=${ARPVERSION}" \
 "-DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN}/toolchain.cmake" \
 -S "${DIR}/../." \
--B "${DIR}/../build/external/${TARGETNAME}_${VERSION}"
+-B "${DIR}/../build/${TARGETNAME}_${VERSION}"
 
-cmake --build "${DIR}/../build/external/${TARGETNAME}_${VERSION}" \
+cmake --build "${DIR}/../build/${TARGETNAME}_${VERSION}" \
 --config Debug \
 --target all -- -j 3
 
-cmake --build "${DIR}/../build/external/${TARGETNAME}_${VERSION}" \
+cmake --build "${DIR}/../build/${TARGETNAME}_${VERSION}" \
 --config Debug --target install -- -j 3
 

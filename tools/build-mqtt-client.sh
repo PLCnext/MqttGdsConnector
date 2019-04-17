@@ -17,4 +17,4 @@ echo build MqttClient Component with pahoC an PahoCpp
 ls -la ${DIR}/../external/mqttclient/
 chmod +x ${DIR}/../external/mqttclient/tools/build-*.sh
 ${DIR}/../external/mqttclient/tools/build-all.sh -t "${TOOLCHAIN}" -a "${ARPVERSION}" -n "${TARGETNAME}"
-cp  -a -f ${DIR}/../external/mqttclient/deploy/. ${DIR}/../external/deploy/
+cp  -a -f ${DIR}/../external/mqttclient/deploy/. ${DIR}/../deploy/
