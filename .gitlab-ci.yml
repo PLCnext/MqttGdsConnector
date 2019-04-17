@@ -60,7 +60,7 @@ BuildJson:
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildValiJson:
  stage: PLCnextBuild
@@ -75,7 +75,7 @@ BuildValiJson:
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildMqttClient:
  stage: PLCnextBuild
@@ -90,7 +90,7 @@ BuildMqttClient:
  artifacts:
   expire_in: 10 min
   paths:
-  - external/deploy
+  - deploy/
 
 BuildComponent:
  stage: PLCnextBuildLibrary
@@ -106,9 +106,7 @@ BuildComponent:
   when: always
   expire_in: 1 hour
   paths:
-   - bin/
-   - build/
-   - external/deploy
+  - deploy/
 
 BuildAll:
  stage: PLCnextBuildAll
@@ -119,4 +117,4 @@ BuildAll:
   name: "$CI_COMMIT_REF_SLUG"
   when: on_success
   paths:
-   - deploy
+   - deploy/
