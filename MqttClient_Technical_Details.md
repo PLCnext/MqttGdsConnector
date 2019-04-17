@@ -2,7 +2,7 @@
 
 | Date       | Version |
 |:---------- | -------:|
-| 29.03.2019 | 1.0.0   |
+| 29.03.2019 | 1.0.2   |
 
 
 ## IMPORTANT NOTE
@@ -65,8 +65,7 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
 1. On a PC, create a text file named `mqtt_gds.settings.json`, containing the following configuration:
 
    ```json
-   {
-     "brokers":[{
+   { "brokers":[{
        "host": "tcp://test.mosquitto.org:1883",
        "client_name": "MyPLCnext",
        "connect_options":{
@@ -77,6 +76,8 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
        },
        "publish_data":[{
          "port"   : "Arp.Plc.Eclr/MainInstance.PubMessage",
+         "qos": 0,
+         "retained": false,
          "topics" :[
            "MyPubTopic"
          ]
@@ -183,7 +184,8 @@ Note:
    - 3 = only try version 3.1
    - 4 = only try version 3.1.1
 
------------
+<div style="page-break-after: always;"></div>
+
 #### will_options
 
 Name     | Required | JSON type | Description
@@ -213,8 +215,8 @@ publish_data must be an array of objects with the following properties:
 Name     | Required | JSON type        | Description
 :---     | :---     | :---             | :---
 port     | Yes      | string           | The 'OUT' port from which data will be published<sup>1</sup>.
-qos      | No       | integer          | The message Quality of Service.
-retained | No       | boolean          | Tell the broker to keep messages after send to subscribers.
+qos      | Yes      | integer          | The message Quality of Service.
+retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers.
 topics   | Yes      | array of strings | Message are published to all these topics.
 
 Note:
@@ -244,7 +246,7 @@ Note:
 
 ### Configuration examples
 
-Examples of configuration files that you can use as a starting point for your own project are available [here](www.github.com/PLCnext/MqttGdsConnector/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
+Examples of configuration files that you can use as a starting point for your own project are available [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
 
 
 ## Known issues
@@ -255,15 +257,15 @@ If the connection to the broker is lost, the client will attempt to reconnect, b
 ## Source code
 
 This Function Extension uses two PLCnext Technology components. The source code for these components is available on Github:
-- [MQTT Client](www.github.com/PLCnext/MqttClient)
-- [MQTT GDS Connector](www.github.com/PLCnext/MqttGdsConnector)
+- [MQTT Client](https://github.com/PLCnext/MqttClient)
+- [MQTT GDS Connector](https://github.com/PLCnext/MqttGdsConnector)
 
 Community contributions to these open-source projects are welcome.
-
+<div style="page-break-after: always;"></div>
 
 ## Support and Feature Requests
 
-Please raise any relevant issues on the MQTT GDS Connector Github project. [PLCnext Github site](www.github.com/PLCnext/MqttGdsConnector).
+Please raise any relevant issues on the [MQTT GDS Connector Github project](https://github.com/PLCnext/MqttGdsConnector/issues).
 
 For general support and further information on PLCnext Technology, please visit the [PLCnext Community website](https://plcnext-community.net).
 
