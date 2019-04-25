@@ -71,6 +71,13 @@ public: // abstract operations
     virtual int32   Disconnect(int32 clientId, int32 timeoutMS) = 0;
 
     /// <summary>
+    /// Return the maximum time to wait for an action to complete.
+    /// </summary>
+    /// <param name="clientId">the client identifier.</param>
+    /// <returns>the timeout in milliseconds.</returns>
+    virtual int32   GetTimeout(int32 clientId) = 0;
+
+    /// <summary>
     /// Determines if this client is currently connected to the server.
     /// </summary>
     /// <param name="clientId">the client identifier.</param>
@@ -95,6 +102,14 @@ public: // abstract operations
     /// <param name="clientId">the client identifier.</param>
     /// <returns>0: success</returns>
     virtual int32   Reconnect(int32 clientId) = 0;
+
+    /// <summary>
+    /// Set the maximum time to wait for an action to complete.
+    /// </summary>
+    /// <param name="clientId">the client identifier.</param>
+    /// <param name="timeoutMS">the timeout in milliseconds.</param>
+    /// <returns>0: success</returns>
+    virtual int32   SetTimeout(int32 clientId, int32 timeoutMS) = 0;
 
     /// <summary>
     /// Subscribe to a topic, which may include wildcards, using a QoS of 1.

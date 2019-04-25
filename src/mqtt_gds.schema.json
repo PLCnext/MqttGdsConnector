@@ -18,6 +18,9 @@
             "minLength": 1,
             "maxLength": 512
           },
+          "timeout": {
+            "type": "integer"
+          },
           "connect_options": {
             "type": "object",
             "properties": {

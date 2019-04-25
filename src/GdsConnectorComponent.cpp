@@ -272,6 +272,14 @@ void GdsConnectorComponent::SetupConfig()
     {
         this->log.Info("Created MQTT Client with ID: {0}", this->mqttClientId);
         // TODO: Store ID in config (required for multiple brokers)
+
+        // Set the client timeout value.
+        // This is a catch-all for blocking operations, so that the application doesn't
+        // hang forever if one operation fails to complete.
+        // The value should be different depending on the underlying type of network and connection
+        // e.g. higher for a satellite phone, lower for a LAN.
+        if (broker.contains("timeout"))
+            this->pMqttClientService->SetTimeout(this->mqttClientId, broker["timeout"].get<int32>());
     }
     else
     {
