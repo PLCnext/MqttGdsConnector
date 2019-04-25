@@ -25,6 +25,9 @@
 #define SCHEMA_FILE_NAME "mqtt_gds.schema.json"            // ... and hard-code the schema file name
 #define SCHEMA_FILE SCHEMA_FILE_PATH "/" SCHEMA_FILE_NAME
 
+// Define some sensible default connect options
+#define ConnectOptionsInit { 60, 30, NULL, NULL, 0, NULL, NULL, true, NULL, 0, false, 0, 0 }
+
 namespace PxceTcs { namespace Mqtt
 {
 

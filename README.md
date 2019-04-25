@@ -184,6 +184,7 @@ Name            | Required | JSON type        | Description
 :---            | :---     | :---             | :---
 host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
 clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
+timeout         | No       | integer          | Client timeout value in milliseconds.
 connect_options | Yes      | object           | The connection options. See table below.
 publish_data    | No       | array of objects | MQTT publish information. See table below.
 subscribe_data  | No       | array of objects | MQTT subscribe information. See table below.
@@ -198,20 +199,20 @@ Note:
 -----------
 #### connect_options
 
-Name                | Required | JSON type | Description
-:---                | :---     | :---      | :---
-keep_alive_interval | No       | integer   | The keep alive interval in seconds.
-connect_timeout     | No       | integer   | The connect timeout in seconds.
-username            | No       | string    | The user name to use for the connection.
-password            | No       | string    | The password to use for the connection.
-max_inflight        | No       | integer   | The maximum number of messages that can be in-flight simultaneously.
-is_clean_session    | No       | boolean   | Whether the server should remember state for the client across reconnects.
-mqtt_version        | No       | integer   | The version of MQTT to be used on the connect.<sup>1</sup>
-automatic_reconnect | No       | boolean   | Enable or disable automatic reconnects.
-min_retry_interval  | No       | integer   | The minimum retry interval in seconds. Doubled on each failed retry.
-max_retry_interval  | No       | integer   | The maximum retry interval in seconds. The doubling stops here on failed retries.
-will_options        | Yes      | object    | The LWT options to use for the connection. See table below.
-ssl_options         | No       | object    | The SSL options to use for the connection. See table below. 
+Name                | Required | JSON type | Default value | Description
+:---                | :---     | :---      | :---          | :---
+keep_alive_interval | No       | integer   | 60            | The keep alive interval in seconds.
+connect_timeout     | No       | integer   | 30            | The connect timeout in seconds.
+username            | No       | string    | NULL          | The user name to use for the connection.
+password            | No       | string    | NULL          | The password to use for the connection.
+max_inflight        | No       | integer   | 0             | The maximum number of messages that can be in-flight simultaneously.
+is_clean_session    | No       | boolean   | true          | Whether the server should remember state for the client across reconnects.
+mqtt_version        | No       | integer   | 0             | The version of MQTT to be used on the connect.<sup>1</sup>
+automatic_reconnect | No       | boolean   | false         | Enable or disable automatic reconnects.
+min_retry_interval  | No       | integer   | 0             | The minimum retry interval in seconds. Doubled on each failed retry.
+max_retry_interval  | No       | integer   | 0             | The maximum retry interval in seconds. The doubling stops here on failed retries.
+will_options        | Yes      | object    |               | The LWT options to use for the connection. See table below.
+ssl_options         | No       | object    |               | The SSL options to use for the connection. See table below. 
 
 Note:
 1. mqtt_version:

@@ -286,7 +286,8 @@ void GdsConnectorComponent::SetupConfig()
         this->log.Error("Error creating MQTT Client with URL {0} and client name {1}", host, clientName);
     }
 
-    ConnectOptions opts;
+    // Create and initialise a connect options structure
+    ConnectOptions opts = ConnectOptionsInit;
 
     // Assign ConnectOptions
     if (broker.contains("connect_options"))
