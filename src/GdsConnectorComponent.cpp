@@ -287,7 +287,10 @@ void GdsConnectorComponent::SetupConfig()
     }
 
     // Create and initialise a connect options structure
-    ConnectOptions opts = ConnectOptionsInit;
+    ConnectOptions opts;
+    opts.keepAliveInterval = 60;
+    opts.connectTimeout = 30;
+    opts.isCleanSession = true;
 
     // Assign ConnectOptions
     if (broker.contains("connect_options"))
@@ -347,7 +350,7 @@ void GdsConnectorComponent::SetupConfig()
 
         if (connectOpts.contains("is_clean_session"))
             opts.isCleanSession = connectOpts["is_clean_session"].get<boolean>();
-            // // TODO: Implement opts.servers
+        // TODO: Implement opts.servers
         if (connectOpts.contains("mqtt_version"))
             opts.mqttVersion = connectOpts["mqtt_version"].get<int32>();
         if (connectOpts.contains("automatic_reconnect"))
