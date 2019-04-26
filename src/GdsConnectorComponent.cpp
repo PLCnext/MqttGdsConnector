@@ -480,6 +480,19 @@ void GdsConnectorComponent::Dispose()
 
 void GdsConnectorComponent::Update()
 {
+    // Process input ports
+    // Detect a rising edge on the Reconnect input port
+    if (this->Reconnect && !this->ReconnectMemory)
+    {
+        // Only try to reconnect if currently disconnected
+        if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            this->pMqttClientService->Reconnect(this->mqttClientId);
+        }
+    }
+    // Remember the value of the input port for next time
+    this->ReconnectMemory = this->Reconnect;
+
     // Publish all GDS data on every scan cycle.
     // TODO: Think about subscribing to GDS ports instead.
     // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
@@ -556,6 +569,9 @@ void GdsConnectorComponent::Update()
             }
         }
     }
+
+    // Update output ports
+    this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
 }
 
 }} // end of namespace PxceTcs.Mqtt

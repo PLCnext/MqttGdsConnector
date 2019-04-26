@@ -69,6 +69,8 @@ private: // fields
 
     json config;
 
+    bool ReconnectMemory;
+
 private:
 	void Update();  // Operation that is executed on each thread loop
 
@@ -84,6 +86,13 @@ public: /* Ports
            are necessary, define a single structure port where attributes can be defined foreach field of the
            structure.
         */
+    // Output port indicating the connection status
+    //#port
+    bool IsConnected = false;
+
+    // Input port that forces a reconnect attempt
+    //#port
+    bool Reconnect = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
