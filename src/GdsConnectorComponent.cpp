@@ -266,6 +266,24 @@ void GdsConnectorComponent::SetupConfig()
     // TODO: Handle more than the first broker!
     json broker = this->config["brokers"][0];
     const auto host = RscString<512>(broker["host"].get<std::string>());
+
+    // Check if Transport Layer Security will be used.
+    if (host.CStr().compare(0, 3, "ssl") == 0)
+    {
+        // If using TLS, check that SSL options have been specified.
+        if (!broker.contains("connect_options"))
+        {
+            this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+        }
+        else
+        {
+            if (!broker["connect_options"].contains("ssl_options"))
+            {
+                this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+            }
+        }
+    }
+
     const auto clientName = RscString<512>(broker["client_name"].get<std::string>());
     this->mqttClientId = this->pMqttClientService->CreateClient(host, clientName);
     if (this->mqttClientId > 0)
