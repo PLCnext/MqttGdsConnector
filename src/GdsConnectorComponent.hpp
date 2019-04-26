@@ -69,7 +69,7 @@ private: // fields
 
     json config;
 
-    bool ReconnectMemory;
+    boolean ReconnectMemory;
 
 private:
 	void Update();  // Operation that is executed on each thread loop
@@ -88,11 +88,11 @@ public: /* Ports
         */
     // Output port indicating the connection status
     //#port
-    bool IsConnected = false;
+    boolean IsConnected = false;
 
     // Input port that forces a reconnect attempt
     //#port
-    bool Reconnect = false;
+    boolean Reconnect = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
