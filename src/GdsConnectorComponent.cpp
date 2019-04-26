@@ -268,7 +268,7 @@ void GdsConnectorComponent::SetupConfig()
     const auto host = RscString<512>(broker["host"].get<std::string>());
 
     // Check if Transport Layer Security will be used.
-    if (host.CStr().compare(0, 3, "ssl") == 0)
+    if (compare(host.CStr(), "ssl", 3) == 0)
     {
         // If using TLS, check that SSL options have been specified.
         if (!broker.contains("connect_options"))
