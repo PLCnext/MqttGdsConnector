@@ -480,6 +480,10 @@ void GdsConnectorComponent::Dispose()
 
 void GdsConnectorComponent::Update()
 {
+    // Calculate seconds from the cycle counter
+    // This is likely to drift, but ... so what.
+    int32 seconds = this->cycles / (CYCLE_TIME_MS/1000.0);
+
     // Process input ports
     // Detect a rising edge on the Reconnect input port
     if (this->Reconnect && !this->ReconnectMemory)
@@ -487,6 +491,7 @@ void GdsConnectorComponent::Update()
         // Only try to reconnect if currently disconnected
         if (!this->pMqttClientService->IsConnected(this->mqttClientId))
         {
+        	this->log.Info("Attempting MQTT client reconnect.");
             this->pMqttClientService->Reconnect(this->mqttClientId);
         }
     }
@@ -504,24 +509,29 @@ void GdsConnectorComponent::Update()
         {
             json publishRecord = it.value();
             RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
+            int32 period = (publishRecord.contains("period") ? publishRecord["period"].get<int32>() : -1);
             int32 qos = publishRecord["qos"].get<int32>();
             boolean retained = publishRecord["retained"].get<boolean>();
 
-            // Read the current value of the port variable
-            ReadItem portData = this->pDataAccessService->ReadSingle(portName);
-
-            // TODO: Check for DataAccessErrors
-
-            // Iterate through the topics that the message will be published to
-            json * pubTopics = &it.value()["topics"];
-            for (auto it2 : pubTopics->items())
+            // Publish each record when required
+            if (!publishRecord.contains("period") || seconds % period == 0)
             {
-                // Publish the data
-                size_t length = Sizeof(portData.Value);
-                int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
-                if (response != 0)
+                // Read the current value of the port variable
+                ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+
+                // TODO: Check for DataAccessErrors
+
+                // Iterate through the topics that the message will be published to
+                json * pubTopics = &it.value()["topics"];
+                for (auto it2 : pubTopics->items())
                 {
-                    this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                    // Publish the data
+                    size_t length = Sizeof(portData.Value);
+                    int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
+                    if (response != 0)
+                    {
+                        this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                    }
                 }
             }
         }
@@ -572,6 +582,9 @@ void GdsConnectorComponent::Update()
 
     // Update output ports
     this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
+
+    // Increment the runtime counter and reset if necessary
+    if (++this->cycles >= MAX_CYCLES) this->cycles = 0;
 }
 
 }} // end of namespace PxceTcs.Mqtt

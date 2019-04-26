@@ -25,6 +25,9 @@
 #define SCHEMA_FILE_NAME "mqtt_gds.schema.json"            // ... and hard-code the schema file name
 #define SCHEMA_FILE SCHEMA_FILE_PATH "/" SCHEMA_FILE_NAME
 
+#define CYCLE_TIME_MS 500
+#define MAX_CYCLES 172800 // 86400 * 2, i.e. 1 day at 500 ms cycle
+
 namespace PxceTcs { namespace Mqtt
 {
 
@@ -71,6 +74,10 @@ private: // fields
 
     boolean ReconnectMemory;
 
+    // Cycle counter
+    // Used to publish data periodically
+    int32 cycles = 0;
+
 private:
 	void Update();  // Operation that is executed on each thread loop
 
@@ -99,7 +106,7 @@ public: /* Ports
 // inline methods of class GdsConnectorComponent
 inline GdsConnectorComponent::GdsConnectorComponent(IApplication& application, const String& name)
 : ComponentBase(application, ::PxceTcs::Mqtt::GdsConnectorLibrary::GetInstance(), name, ComponentCategory::Custom)
-, updateThread(this, &PxceTcs::Mqtt::GdsConnectorComponent::GdsConnectorComponent::Update, Milliseconds{500}.count(), "CyclicUpdate")
+, updateThread(this, &PxceTcs::Mqtt::GdsConnectorComponent::GdsConnectorComponent::Update, Milliseconds{CYCLE_TIME_MS}.count(), "CyclicUpdate")
 {
 }
 

@@ -29,7 +29,7 @@ The component can connect to a single MQTT broker using TCP or WebSockets, over 
 
 Only one client, and one concurrent server connection, is currently supported.
 
-The client will publish the value of all configured GDS ports at a fixed frequency of 500ms. Data from each GDS port can be published to multiple MQTT topics.
+The client will publish the value of each configured GDS ports at the specified frequency. Data from each GDS port can be published to multiple MQTT topics.
 
 The client will subscribe to all configured MQTT topics. The payload from any new message on a subscribed MQTT topic can be written to one or more GDS ports.
 
@@ -120,6 +120,8 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
        },
        "publish_data":[{
          "port"   : "Arp.Plc.Eclr/MainInstance.PubMessage",
+         "qos"    : 0,
+         "retained": false,
          "topics" :[
            "MyPubTopic"
          ]
@@ -250,6 +252,7 @@ publish_data must be an array of objects with the following properties:
 Name     | Required | JSON type        | Description
 :---     | :---     | :---             | :---
 port     | Yes      | string           | The 'OUT' port from which data will be published<sup>1</sup>.
+period   | No       | integer          | The publish frequency in seconds (max 86,400). If not specified, period=500ms.
 qos      | Yes      | integer          | The message Quality of Service.
 retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers.
 topics   | Yes      | array of strings | Message are published to all these topics.

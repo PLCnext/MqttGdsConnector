@@ -48,6 +48,7 @@
         },
         {
           "port"      : "Arp.Plc.Eclr/MainInstance.PubString",
+          "period": 1,
           "qos": 0,
           "retained": false,
           "topics" :
@@ -58,6 +59,7 @@
         },
         {
           "port"   : "Arp.Plc.Eclr/MainInstance.PubInt",
+          "period": 2,
           "qos": 0,
           "retained": false,
           "topics" :

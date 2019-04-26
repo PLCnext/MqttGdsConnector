@@ -127,6 +127,11 @@
                   "minLength": 1,
                   "maxLength": 512
                 },
+                "period": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                },
                 "qos": {
                   "type": "integer"
                 },
