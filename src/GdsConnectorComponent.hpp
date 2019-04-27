@@ -17,6 +17,7 @@
 #include "Arp/Plc/Gds/Services/IDataAccessService.hpp"
 
 #include "IMqttClientService.hpp"
+#include <string.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
