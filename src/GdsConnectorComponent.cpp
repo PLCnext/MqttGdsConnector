@@ -284,6 +284,53 @@ void GdsConnectorComponent::SetupConfig()
         }
     }
 
+    // Check that the Status GDS port exists
+    if (broker.contains("status_port"))
+    {
+        RscString<512> portName = RscString<512>(broker["status_port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error != DataAccessError::None)
+        {
+            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            // Delete this port from the settings.
+            broker.erase("status_port");
+        }
+        else if (portData.Value.GetType() != RscType::Bool)
+        {
+            this->log.Error("Status port {0} is not of type Bool.", portName);
+            // Delete this port from the settings.
+            broker.erase("status_port");
+        }
+    }
+    else
+    {
+        this->log.Info("No status port has been specified.");
+    }
+
+    // Check that the Reconnect GDS port exists
+    if (broker.contains("reconnect_port"))
+    {
+        RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error != DataAccessError::None)
+        {
+            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            // Delete this port from the settings.
+            broker.erase("reconnect_port");
+        }
+        else if (portData.Value.GetType() != RscType::Bool)
+        {
+            this->log.Error("Reconnect port {0} is not of type Bool.", portName);
+            // Delete this port from the settings.
+            broker.erase("reconnect_port");
+        }
+    }
+    else
+    {
+        this->log.Info("No reconnect port has been specified.");
+    }
+
+    // Create the MQTT client and check for errors
     const auto clientName = RscString<512>(broker["client_name"].get<std::string>());
     this->mqttClientId = this->pMqttClientService->CreateClient(host, clientName);
     if (this->mqttClientId > 0)
@@ -503,18 +550,33 @@ void GdsConnectorComponent::Update()
     int32 seconds = this->cycles / (CYCLE_TIME_MS/1000.0);
 
     // Process input ports
-    // Detect a rising edge on the Reconnect input port
-    if (this->Reconnect && !this->ReconnectMemory)
+    // TODO: Handle more than the first broker!
+    json broker = this->config["brokers"][0];
+    if (broker.contains("reconnect_port"))
     {
-        // Only try to reconnect if currently disconnected
-        if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+        // Detect a rising edge on the Reconnect input port
+        RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error == DataAccessError::None)
         {
-        	this->log.Info("Attempting MQTT client reconnect.");
-            this->pMqttClientService->Reconnect(this->mqttClientId);
+            this->Reconnect = portData.Value;
+            if (this->Reconnect && !this->ReconnectMemory)
+            {
+                // Only try to reconnect if currently disconnected
+                if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+                {
+                    this->log.Info("Attempting MQTT client reconnect.");
+                    this->pMqttClientService->Reconnect(this->mqttClientId);
+                }
+            }
+            // Remember the value of the reconnect port for next time
+            this->ReconnectMemory = this->Reconnect;
+        }
+        else
+        {
+            this->log.Error("Port {0}: {1}", portName, portData.Error);
         }
     }
-    // Remember the value of the input port for next time
-    this->ReconnectMemory = this->Reconnect;
 
     // Publish all GDS data on every scan cycle.
     // TODO: Think about subscribing to GDS ports instead.
@@ -600,6 +662,13 @@ void GdsConnectorComponent::Update()
 
     // Update output ports
     this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
+    if (broker.contains("status_port"))
+    {
+        WriteItem writePortData;
+        writePortData.PortName = RscString<512>(broker["status_port"].get<std::string>());
+        writePortData.Value = RscVariant<512>(this->IsConnected);
+        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+    }
 
     // Increment the runtime counter and reset if necessary
     if (++this->cycles >= MAX_CYCLES) this->cycles = 0;

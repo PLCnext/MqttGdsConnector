@@ -73,6 +73,12 @@ private: // fields
 
     json config;
 
+    // Output port indicating the connection status
+    boolean IsConnected = false;
+
+    // Input port that forces a reconnect attempt
+    boolean Reconnect = false;
+    // ... and this for edge detection
     boolean ReconnectMemory;
 
     // Cycle counter
@@ -81,26 +87,6 @@ private: // fields
 
 private:
 	void Update();  // Operation that is executed on each thread loop
-
-public: /* Ports
-           =====
-           Component ports are defined in the following way:
-           //#port
-           //#name(NameOfPort)
-           boolean portField;
-
-           The name comment defines the name of the port and is optional. Default is the name of the field.
-           Attributes which are defined for a component port are IGNORED. If component ports with attributes
-           are necessary, define a single structure port where attributes can be defined foreach field of the
-           structure.
-        */
-    // Output port indicating the connection status
-    //#port
-    boolean IsConnected = false;
-
-    // Input port that forces a reconnect attempt
-    //#port
-    boolean Reconnect = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

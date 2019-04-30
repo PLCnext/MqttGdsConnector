@@ -5,6 +5,8 @@
       "host": "ssl://test.mosquitto.org:8883",
       "client_name": "PxcTest",
       "timeout": 60,
+      "status_port": "Arp.Plc.Eclr/MainInstance.MqttConnected",
+      "reconnect_port": "Arp.Plc.Eclr/MainInstance.MqttReconnect",
       "connect_options":
       {
           "keep_alive_interval": 30,

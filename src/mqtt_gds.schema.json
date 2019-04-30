@@ -21,6 +21,16 @@
           "timeout": {
             "type": "integer"
           },
+          "status_port": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "reconnect_port": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
           "connect_options": {
             "type": "object",
             "properties": {
