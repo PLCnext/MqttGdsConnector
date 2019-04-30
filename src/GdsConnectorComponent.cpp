@@ -559,7 +559,7 @@ void GdsConnectorComponent::Update()
         ReadItem portData = this->pDataAccessService->ReadSingle(portName);
         if (portData.Error == DataAccessError::None)
         {
-            this->Reconnect = portData.Value;
+            portData.Value.CopyTo(this->Reconnect);
             if (this->Reconnect && !this->ReconnectMemory)
             {
                 // Only try to reconnect if currently disconnected

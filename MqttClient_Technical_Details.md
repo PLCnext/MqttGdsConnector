@@ -150,6 +150,8 @@ Name            | Required | JSON type        | Description
 host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
 clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
 timeout         | No       | integer          | Client timeout value in milliseconds.
+status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.
+reconnect_port  | No       | string           | The name of a boolean GDS port that, on a rising edge, will trigger a reconnect attempt.
 connect_options | Yes      | object           | The connection options. See table below.
 publish_data    | No       | array of objects | MQTT publish information. See table below.
 subscribe_data  | No       | array of objects | MQTT subscribe information. See table below.
