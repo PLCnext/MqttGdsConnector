@@ -203,17 +203,20 @@ void GdsConnectorComponent::LoadConfig()
     // Get the configuration schema file
     std::ifstream mqttSettingsSchemaFile(MQTT_SCHEMA_FILE, ios_base::in);
     std::ifstream awsSettingsSchemaFile(AWS_SCHEMA_FILE, ios_base::in);
-    std::ifstream settingsSchemaFile;
 
     // Check for the existence of the schema file
     // Currently it is not possible to install both the MQTT app
     // and the AWS app in the same PLC, so this should work ...
-    if(mqttSettingsSchemaFile) settingsSchemaFile = mqttSettingsSchemaFile;
-    else if(awsSettingsSchemaFile) settingsSchemaFile = awsSettingsSchemaFile;
+    std::string schemaFile;
+    if(mqttSettingsSchemaFile) schemaFile = MQTT_SCHEMA_FILE;
+    else if(awsSettingsSchemaFile) schemaFile = AWS_SCHEMA_FILE;
     else {
         this->log.Error("Configuration schema file does not exist.");
         return;
     }
+
+    // Open the schema file.
+    std::ifstream settingsSchemaFile(schemaFile, ios_base::in);
 
     using valijson::Schema;
     using valijson::SchemaParser;
