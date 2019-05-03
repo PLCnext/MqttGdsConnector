@@ -8,7 +8,7 @@
 
 | Date       | Version | Author       |
 |------------|---------|--------------|
-| 29.03.2019 | 1.0.2   | Martin Boers |
+| 02.05.2019 | 1.1.0   | Martin Boers |
 
 
 ## Description
