@@ -25,7 +25,8 @@
 #define AWS_SCHEMA_FILE "/opt/plcnext/apps/60002172000053/mqtt_gds.schema.json"
 
 #define CYCLE_TIME_MS 500
-#define MAX_CYCLES 172800 // 86400 * 2, i.e. 1 day at 500 ms cycle
+#define CYCLES_PER_SECOND 2
+#define MAX_CYCLES 1209600 // 86400 sec/day * 2 cycles/sec * 7 days, i.e. 1 week at 500 ms cycle
 
 namespace PxceTcs { namespace Mqtt
 {
@@ -70,6 +71,9 @@ private: // fields
     int32 mqttPublishResponse;
 
     json config;
+
+    boolean automaticReconnect = false;
+    int32 retryInterval = 0;
 
     // Output port indicating the connection status
     boolean IsConnected = false;

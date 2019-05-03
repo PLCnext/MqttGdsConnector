@@ -435,6 +435,10 @@ void GdsConnectorComponent::SetupConfig()
         this->log.Info("No MQTT Connect Options provided. Defaults will be used.");
     }
 
+    // Remember some of the automatic connection options
+    this->retryInterval = opts.maxRetryInterval;
+    this->automaticReconnect = (this->retryInterval > 0 ? opts.automaticReconnect : false);
+
     // Connect to the MQTT client
     int32 mqttResponse = this->pMqttClientService->Connect(this->mqttClientId, opts);
     if (mqttResponse == 0)
@@ -552,36 +556,55 @@ void GdsConnectorComponent::Update()
 {
     // Calculate seconds from the cycle counter
     // This is likely to drift, but ... so what.
-    int32 seconds = this->cycles / (CYCLE_TIME_MS/1000.0);
+    int32 seconds = this->cycles / CYCLES_PER_SECOND;
 
-    // Process input ports
+    // Generate a pulse (approximately) every second
+    boolean secPulse = (this->cycles % CYCLES_PER_SECOND == 0);
+
+    // Look for a connection drop-out
     // TODO: Handle more than the first broker!
     json broker = this->config["brokers"][0];
+
+    if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
+    {
+        // Connection has just dropped.
+        this->log.Info("Connection to the server has been lost.");
+
+        // Reset the automatic reconnect timer.
+        this->secsToReconnect = this->retryInterval;
+    }
+
+    // Decrement the automatic reconnect timer and reset if necessary
+    if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
+
+    // Process input ports
     if (broker.contains("reconnect_port"))
     {
-        // Detect a rising edge on the Reconnect input port
         RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
         ReadItem portData = this->pDataAccessService->ReadSingle(portName);
         if (portData.Error == DataAccessError::None)
         {
             portData.Value.CopyTo(this->Reconnect);
-            if (this->Reconnect && !this->ReconnectMemory)
-            {
-                // Only try to reconnect if currently disconnected
-                if (!this->pMqttClientService->IsConnected(this->mqttClientId))
-                {
-                    this->log.Info("Attempting MQTT client reconnect.");
-                    this->pMqttClientService->Reconnect(this->mqttClientId);
-                }
-            }
-            // Remember the value of the reconnect port for next time
-            this->ReconnectMemory = this->Reconnect;
         }
         else
         {
             this->log.Error("Port {0}: {1}", portName, portData.Error);
         }
     }
+
+    // Check for manual or automatic reconnect attempts
+    if (this->Reconnect && !this->ReconnectMemory
+        || this->automaticReconnect && this->secsToReconnect == 0)
+    {
+        // Only try to reconnect if currently disconnected
+        if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            this->log.Info("Attempting MQTT client reconnect.");
+            this->pMqttClientService->Reconnect(this->mqttClientId);
+        }
+    }
+    // Remember the value of the reconnect port for next time
+    this->ReconnectMemory = this->Reconnect;
 
     // Publish all GDS data on every scan cycle.
     // TODO: Think about subscribing to GDS ports instead.
@@ -676,7 +699,7 @@ void GdsConnectorComponent::Update()
     }
 
     // Increment the runtime counter and reset if necessary
-    if (++this->cycles >= MAX_CYCLES) this->cycles = 0;
+    if (++(this->cycles) >= MAX_CYCLES) this->cycles = 0;
 }
 
 }} // end of namespace PxceTcs.Mqtt

@@ -29,6 +29,8 @@ The component can connect to a single MQTT broker using TCP or WebSockets, over 
 
 Only one client, and one concurrent server connection, is currently supported.
 
+If the connection to the server is lost, then the client can attempt to reconnect automatically - see the `connect_options` table below. If automatic_reconnect is TRUE, and max_retry_interval is non-zero, then the client will continue reconnection attempts every `max_retry_interval` until the connection is re-established. In addition, a reconnection attempt is made on every rising edge of the `reconnect_port` GDS variable.
+
 The client will publish the value of each configured GDS ports at the specified frequency. Data from each GDS port can be published to multiple MQTT topics.
 
 The client will subscribe to all configured MQTT topics. The payload from any new message on a subscribed MQTT topic can be written to one or more GDS ports.
