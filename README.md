@@ -189,18 +189,24 @@ Name            | Required | JSON type        | Description
 host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
 clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
 timeout         | No       | integer          | Client timeout value in milliseconds.
-status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.
-reconnect_port  | No       | string           | The name of a boolean GDS port that, on a rising edge, will trigger a reconnect attempt.
+status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.<sup>2</sup>
+reconnect_port  | No       | string           | The name of a boolean GDS port that, on a rising edge, will trigger a reconnect attempt.<sup>2</sup>
 connect_options | Yes      | object           | The connection options. See table below.
 publish_data    | No       | array of objects | MQTT publish information. See table below.
 subscribe_data  | No       | array of objects | MQTT subscribe information. See table below.
 
-Note:
+Notes:
 1. The host _must_ be specified in the following format:
 
    *protocol://host:port*
 
    ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. For *host*, you can specify either an IP address or a domain name.
+
+1. Ports on PLCnext Engineer programs must be specified in the following format:
+
+   *Arp.Plc.Eclr/ProgramInstance.PortName*
+
+   ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of a port variable defined in that program.
 
 -----------
 #### connect_options
@@ -293,7 +299,7 @@ Examples of configuration files that you can use as a starting point for your ow
 
 ## Known issues
 
-If the connection to the broker is lost, the client will attempt to reconnect, but will eventually give up. In this case, the PLC must be restarted in order to trigger more connection attempts.
+None.
 
 -----------
 
