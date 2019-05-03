@@ -193,66 +193,68 @@ void GdsConnectorComponent::LoadConfig()
     {
         // Settings file doesn't exist.
         this->log.Error("Configuration file {0} does not exist.", this->settingsPath);
+        return;
+    }
+
+    // Read the settings
+    this->config = json::parse(settingsFile);
+    this->log.Info("Loaded configuration from file: {0}", this->settingsPath);
+
+    // Get the configuration schema file
+    std::ifstream mqttSettingsSchemaFile(MQTT_SCHEMA_FILE, ios_base::in);
+    std::ifstream awsSettingsSchemaFile(AWS_SCHEMA_FILE, ios_base::in);
+    std::ifstream settingsSchemaFile;
+
+    // Check for the existence of the schema file
+    // Currently it is not possible to install both the MQTT app
+    // and the AWS app in the same PLC, so this should work ...
+    if(mqttSettingsSchemaFile) settingsSchemaFile = mqttSettingsSchemaFile;
+    else if(awsSettingsSchemaFile) settingsSchemaFile = awsSettingsSchemaFile;
+    else {
+        this->log.Error("Configuration schema file does not exist.");
+        return;
+    }
+
+    using valijson::Schema;
+    using valijson::SchemaParser;
+    using valijson::Validator;
+    using valijson::ValidationResults;
+    using valijson::adapters::NlohmannJsonAdapter;
+
+    // Read the schema
+    json configJsonSchema = json::parse(settingsSchemaFile);
+    this->log.Info("Loaded configuration schema.");
+
+    // Parse JSON schema content
+    Schema configSchema;
+    SchemaParser configParser;
+    NlohmannJsonAdapter configSchemaAdapter(configJsonSchema);
+    configParser.populateSchema(configSchemaAdapter, configSchema);
+
+    // Validate the configuration
+    Validator validator;
+    ValidationResults results;
+    NlohmannJsonAdapter configAdapter(this->config);
+    if (!validator.validate(configSchema, configAdapter, &results))
+    {
+        this->log.Error("Configuration in file {0} is not valid.", this->settingsPath);
+
+        // Report the errors
+        ValidationResults::Error error;
+        while (results.popError(error))
+        {
+            std::string context;
+            std::vector<std::string>::iterator itr = error.context.begin();
+            for (; itr != error.context.end(); itr++)
+            {
+                context += *itr;
+            }
+            this->log.Error("Context: {0}, Description: {1}", context, error.description);
+        }
     }
     else
     {
-        // Read the settings
-        this->config = json::parse(settingsFile);
-    	this->log.Info("Loaded configuration from file: {0}", this->settingsPath);
-
-        // Get the configuration schema file
-        std::ifstream settingsSchemaFile(SCHEMA_FILE, ios_base::in);
-
-        // Check for the existence of the schema file
-        if(!settingsSchemaFile)
-        {
-            // Schema file doesn't exist.
-            this->log.Error("Configuration schema file {0} does not exist.", SCHEMA_FILE);
-        }
-        else
-        {
-            using valijson::Schema;
-            using valijson::SchemaParser;
-            using valijson::Validator;
-            using valijson::ValidationResults;
-            using valijson::adapters::NlohmannJsonAdapter;
-
-            // Read the schema
-            json configJsonSchema = json::parse(settingsSchemaFile);
-        	this->log.Info("Loaded configuration schema from file: {0}", SCHEMA_FILE);
-
-            // Parse JSON schema content
-            Schema configSchema;
-            SchemaParser configParser;
-            NlohmannJsonAdapter configSchemaAdapter(configJsonSchema);
-            configParser.populateSchema(configSchemaAdapter, configSchema);
-
-            // Validate the configuration
-            Validator validator;
-            ValidationResults results;
-            NlohmannJsonAdapter configAdapter(this->config);
-            if (!validator.validate(configSchema, configAdapter, &results))
-            {
-                this->log.Error("Configuration in file {0} is not valid.", this->settingsPath);
-
-                // Report the errors
-                ValidationResults::Error error;
-                while (results.popError(error))
-                {
-                    std::string context;
-                    std::vector<std::string>::iterator itr = error.context.begin();
-                    for (; itr != error.context.end(); itr++)
-                    {
-                        context += *itr;
-                    }
-                    this->log.Error("Context: {0}, Description: {1}", context, error.description);
-                }
-            }
-            else
-            {
-                this->log.Info("Configuration is valid.");
-            }
-        }
+        this->log.Info("Configuration is valid.");
     }
 }
 

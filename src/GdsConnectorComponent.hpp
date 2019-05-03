@@ -21,10 +21,8 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-#define APP_ID "60002172000048"                            // The unique ID for this app in the PLCnext Store
-#define SCHEMA_FILE_PATH "/opt/plcnext/apps/" APP_ID  // Prepend the path to installed apps
-#define SCHEMA_FILE_NAME "mqtt_gds.schema.json"            // ... and hard-code the schema file name
-#define SCHEMA_FILE SCHEMA_FILE_PATH "/" SCHEMA_FILE_NAME
+#define MQTT_SCHEMA_FILE "/opt/plcnext/apps/60002172000048/mqtt_gds.schema.json"
+#define AWS_SCHEMA_FILE "/opt/plcnext/apps/60002172000053/mqtt_gds.schema.json"
 
 #define CYCLE_TIME_MS 500
 #define MAX_CYCLES 172800 // 86400 * 2, i.e. 1 day at 500 ms cycle
