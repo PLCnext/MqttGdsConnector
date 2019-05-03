@@ -74,6 +74,7 @@ private: // fields
 
     boolean automaticReconnect = false;
     int32 retryInterval = 0;
+    int32 secsToReconnect;
 
     // Output port indicating the connection status
     boolean IsConnected = false;
