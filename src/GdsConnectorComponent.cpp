@@ -610,6 +610,7 @@ void GdsConnectorComponent::Update()
             {
                 this->log.Info("Attempting MQTT client reconnect.");
                 this->pMqttClientService->Reconnect(this->mqttClientId);
+                this->log.Info("Called reconnect.");
             }
         }
         // Remember the value of the reconnect port for next time
@@ -671,10 +672,15 @@ void GdsConnectorComponent::Update()
         //    ... so that we can also write arrays and ... structs?
         Message msg;
 
+        this->log.Info("--------------------------");
+        this->log.Info("About to check IsConnected.");
+
         if (this->pMqttClientService->IsConnected(this->mqttClientId))
         {
+            this->log.Info("Is connected. About to enter TryConsumeMessage while loop.");
             while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
             {
+                this->log.Info("In TryConsumeMessage while loop.");
                 // Write to each of the Ports configured for this topic.
                 // Iterate through the subscribe_data list
                 json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
@@ -705,7 +711,9 @@ void GdsConnectorComponent::Update()
                     }
                 }
             }
+            this->log.Info("Is connected. Finished TryConsumeMessage while loop.");
         }
+        this->log.Info("Is not connected. Skipped TryConsumeMessage.");
 
         // Update output ports
         this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
