@@ -84,6 +84,9 @@ private: // fields
     // ... and this for edge detection
     boolean ReconnectMemory;
 
+    // Flag that indicates the Update method is blocked
+    boolean IsBlocked = false;
+
     // Cycle counter
     // Used to publish data periodically
     int32 cycles = 0;

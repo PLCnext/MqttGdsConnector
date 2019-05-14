@@ -561,141 +561,153 @@ void GdsConnectorComponent::Update()
     // Generate a pulse (approximately) every second
     boolean secPulse = (this->cycles % CYCLES_PER_SECOND == 0);
 
-    // Look for a connection drop-out
-    // TODO: Handle more than the first broker!
-    json broker = this->config["brokers"][0];
-
-    if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
+    // Don't process anything else if this method is currently blocked.
+    if (this->IsBlocked)
     {
-        // Connection has just dropped.
-        this->log.Info("Connection to the server has been lost.");
-
-        // Reset the automatic reconnect timer.
-        this->secsToReconnect = this->retryInterval;
+        this->log.Warning("MQTT update is blocking!");
     }
-
-    // Decrement the automatic reconnect timer and reset if necessary
-    if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
-
-    // Process input ports
-    if (broker.contains("reconnect_port"))
+    else
     {
-        RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
-        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
-        if (portData.Error == DataAccessError::None)
-        {
-            portData.Value.CopyTo(this->Reconnect);
-        }
-        else
-        {
-            this->log.Error("Port {0}: {1}", portName, portData.Error);
-        }
-    }
+        this->IsBlocked = true;
 
-    // Check for manual or automatic reconnect attempts
-    if (this->Reconnect && !this->ReconnectMemory
-        || this->automaticReconnect && this->secsToReconnect == 0)
-    {
-        // Only try to reconnect if currently disconnected
-        if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+        // Look for a connection drop-out
+        // TODO: Handle more than the first broker!
+        json broker = this->config["brokers"][0];
+
+        if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
         {
-            this->log.Info("Attempting MQTT client reconnect.");
-            this->pMqttClientService->Reconnect(this->mqttClientId);
+            // Connection has just dropped.
+            this->log.Info("Connection to the server has been lost.");
+
+            // Reset the automatic reconnect timer.
+            this->secsToReconnect = this->retryInterval;
         }
-    }
-    // Remember the value of the reconnect port for next time
-    this->ReconnectMemory = this->Reconnect;
 
-    // Publish all GDS data on every scan cycle.
-    // TODO: Think about subscribing to GDS ports instead.
-    // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
-    // Iterate through the publish_data list
-    json * publishData = &this->config["brokers"][0]["publish_data"];
-    if (this->pMqttClientService->IsConnected(this->mqttClientId))
-    {
-        for (auto it : publishData->items())
+        // Decrement the automatic reconnect timer and reset if necessary
+        if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
+
+        // Process input ports
+        if (broker.contains("reconnect_port"))
         {
-            json publishRecord = it.value();
-            RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
-            int32 period = (publishRecord.contains("period") ? publishRecord["period"].get<int32>() : -1);
-            int32 qos = publishRecord["qos"].get<int32>();
-            boolean retained = publishRecord["retained"].get<boolean>();
-
-            // Publish each record when required
-            if (!publishRecord.contains("period") || seconds % period == 0)
+            RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
+            ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+            if (portData.Error == DataAccessError::None)
             {
-                // Read the current value of the port variable
-                ReadItem portData = this->pDataAccessService->ReadSingle(portName);
-
-                // TODO: Check for DataAccessErrors
-
-                // Iterate through the topics that the message will be published to
-                json * pubTopics = &it.value()["topics"];
-                for (auto it2 : pubTopics->items())
-                {
-                    // Publish the data
-                    size_t length = Sizeof(portData.Value);
-                    int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
-                    if (response != 0)
-                    {
-                        this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
-                    }
-                }
+                portData.Value.CopyTo(this->Reconnect);
+            }
+            else
+            {
+                this->log.Error("Port {0}: {1}", portName, portData.Error);
             }
         }
-    }
 
-    // Check if any MQTT subscription data has arrived.
-    // Loop until the queue is empty.
-    // TODO: Put a limit on this loop!
-    // TODO: Consider consolidating all messages and writing all together using the Write() method
-    //    ... so that we can also write arrays and ... structs?
-    Message msg;
-
-    if (this->pMqttClientService->IsConnected(this->mqttClientId))
-    {
-        while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
+        // Check for manual or automatic reconnect attempts
+        if (this->Reconnect && !this->ReconnectMemory
+            || this->automaticReconnect && this->secsToReconnect == 0)
         {
-            // Write to each of the Ports configured for this topic.
-            // Iterate through the subscribe_data list
-            json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
-            for (auto it : subscribeData->items())
+            // Only try to reconnect if currently disconnected
+            if (!this->pMqttClientService->IsConnected(this->mqttClientId))
             {
-                if (it.value()["topic"].get<std::string>() == msg.topic.CStr())
-                {
-                    // Get the RscVariant type for this topic,
-                    // and assign this to the incoming message payload.
-                    // TODO: CHECK THAT THE LENGTH OF THE PAYLOAD MATCHES THE DATA TYPE!
-                    // TODO: CHECK THAT THIS TYPE CAST IS NECESSARY
-                    msg.payload.SetType((RscType)it.value()["type"].get<int>());
+                this->log.Info("Attempting MQTT client reconnect.");
+                this->pMqttClientService->Reconnect(this->mqttClientId);
+            }
+        }
+        // Remember the value of the reconnect port for next time
+        this->ReconnectMemory = this->Reconnect;
 
-                    // Iterate through the ports that will be updated by this topic.
-                    json * subPorts = &it.value()["ports"];
-                    for (auto it2 : subPorts->items())
+        // Publish all GDS data on every scan cycle.
+        // TODO: Think about subscribing to GDS ports instead.
+        // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
+        // Iterate through the publish_data list
+        json * publishData = &this->config["brokers"][0]["publish_data"];
+        if (this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            for (auto it : publishData->items())
+            {
+                json publishRecord = it.value();
+                RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
+                int32 period = (publishRecord.contains("period") ? publishRecord["period"].get<int32>() : -1);
+                int32 qos = publishRecord["qos"].get<int32>();
+                boolean retained = publishRecord["retained"].get<boolean>();
+
+                // Publish each record when required
+                if (!publishRecord.contains("period") || seconds % period == 0)
+                {
+                    // Read the current value of the port variable
+                    ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+
+                    // TODO: Check for DataAccessErrors
+
+                    // Iterate through the topics that the message will be published to
+                    json * pubTopics = &it.value()["topics"];
+                    for (auto it2 : pubTopics->items())
                     {
-                        // Write the MQTT message payload to the GDS port.
-                        WriteItem writePortData;
-                        writePortData.PortName = RscString<512>(it2.value());
-                        writePortData.Value = RscVariant<512>(msg.payload);
-                        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
-                        if (result != DataAccessError::None)
+                        // Publish the data
+                        size_t length = Sizeof(portData.Value);
+                        int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
+                        if (response != 0)
                         {
-                            this->log.Error("Error writing to port {0}: {1}", it2.value(), result);
+                            this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
                         }
                     }
                 }
             }
         }
-    }
 
-    // Update output ports
-    this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
-    if (broker.contains("status_port"))
-    {
-        WriteItem writePortData;
-        writePortData.PortName = RscString<512>(broker["status_port"].get<std::string>());
-        writePortData.Value = RscVariant<512>(this->IsConnected);
-        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+        // Check if any MQTT subscription data has arrived.
+        // Loop until the queue is empty.
+        // TODO: Put a limit on this loop!
+        // TODO: Consider consolidating all messages and writing all together using the Write() method
+        //    ... so that we can also write arrays and ... structs?
+        Message msg;
+
+        if (this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
+            {
+                // Write to each of the Ports configured for this topic.
+                // Iterate through the subscribe_data list
+                json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
+                for (auto it : subscribeData->items())
+                {
+                    if (it.value()["topic"].get<std::string>() == msg.topic.CStr())
+                    {
+                        // Get the RscVariant type for this topic,
+                        // and assign this to the incoming message payload.
+                        // TODO: CHECK THAT THE LENGTH OF THE PAYLOAD MATCHES THE DATA TYPE!
+                        // TODO: CHECK THAT THIS TYPE CAST IS NECESSARY
+                        msg.payload.SetType((RscType)it.value()["type"].get<int>());
+
+                        // Iterate through the ports that will be updated by this topic.
+                        json * subPorts = &it.value()["ports"];
+                        for (auto it2 : subPorts->items())
+                        {
+                            // Write the MQTT message payload to the GDS port.
+                            WriteItem writePortData;
+                            writePortData.PortName = RscString<512>(it2.value());
+                            writePortData.Value = RscVariant<512>(msg.payload);
+                            DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+                            if (result != DataAccessError::None)
+                            {
+                                this->log.Error("Error writing to port {0}: {1}", it2.value(), result);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update output ports
+        this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
+        if (broker.contains("status_port"))
+        {
+            WriteItem writePortData;
+            writePortData.PortName = RscString<512>(broker["status_port"].get<std::string>());
+            writePortData.Value = RscVariant<512>(this->IsConnected);
+            DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+        }
+
+        this->IsBlocked = false;
     }
 
     // Increment the runtime counter and reset if necessary
