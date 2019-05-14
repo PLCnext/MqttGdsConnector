@@ -615,6 +615,16 @@ void GdsConnectorComponent::Update()
         // Remember the value of the reconnect port for next time
         this->ReconnectMemory = this->Reconnect;
 
+        // Log successful reconnect
+        if (!this->IsConnected && this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            // Connection has just dropped.
+            this->log.Info("Connection to the server has been restored.");
+
+            // Reset the automatic reconnect timer.
+            this->secsToReconnect = this->retryInterval;
+        }
+
         // Publish all GDS data on every scan cycle.
         // TODO: Think about subscribing to GDS ports instead.
         // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
@@ -714,4 +724,185 @@ void GdsConnectorComponent::Update()
     if (++(this->cycles) >= MAX_CYCLES) this->cycles = 0;
 }
 
+void GdsConnectorComponent::MqttConnect()
+{
+    // TODO: Handle more than the first broker!
+    json broker = this->config["brokers"][0];
+
+    // Create and initialise a connect options structure
+    ConnectOptions opts;
+    opts.keepAliveInterval = 60;
+    opts.connectTimeout = 30;
+    opts.isCleanSession = true;
+
+    // Assign ConnectOptions
+    if (broker.contains("connect_options"))
+    {
+        json connectOpts = broker["connect_options"];
+
+        if (connectOpts.contains("keep_alive_interval"))
+            opts.keepAliveInterval = connectOpts["keep_alive_interval"].get<int32>();
+        if (connectOpts.contains("connect_timeout"))
+            opts.connectTimeout = connectOpts["connect_timeout"].get<int32>();
+        if (connectOpts.contains("user_name"))
+            opts.userName = (RscString<512>)connectOpts["user_name"].get<std::string>();
+        if (connectOpts.contains("password"))
+            opts.password = (RscString<512>)connectOpts["password"].get<std::string>();
+        if (connectOpts.contains("max_inflight"))
+            opts.maxInflight = connectOpts["max_inflight"].get<int32>();
+
+        if (broker["connect_options"].contains("will_options"))
+        {
+            json willOpts = broker["connect_options"]["will_options"];
+
+            if (willOpts.contains("topic"))
+                opts.willOptions.topic = (RscString<512>)willOpts["topic"].get<std::string>();
+            if (willOpts.contains("payload"))
+                opts.willOptions.payload = (RscString<512>)willOpts["payload"].get<std::string>();
+            if (willOpts.contains("qos"))
+                opts.willOptions.qos = willOpts["qos"].get<int32>();
+            if (willOpts.contains("retained"))
+                opts.willOptions.retained = willOpts["retained"].get<boolean>();
+        }
+        else
+        {
+            this->log.Info("No MQTT Last Will Options provided. Defaults will be used.");
+        }
+
+        if (broker["connect_options"].contains("ssl_options"))
+        {
+            json sslOpts = broker["connect_options"]["ssl_options"];
+
+            if (sslOpts.contains("trust_store"))
+                opts.sslOptions.trustStore = (RscString<512>)sslOpts["trust_store"].get<std::string>();
+            if (sslOpts.contains("key_store"))
+                opts.sslOptions.keyStore = (RscString<512>)sslOpts["key_store"].get<std::string>();
+            if (sslOpts.contains("private_key"))
+                opts.sslOptions.privateKey = (RscString<512>)sslOpts["private_key"].get<std::string>();
+            if (sslOpts.contains("private_key_password"))
+                opts.sslOptions.privateKeyPassword = (RscString<512>)sslOpts["private_key_password"].get<std::string>();
+            if (sslOpts.contains("enabled_cipher_suites"))
+                opts.sslOptions.enabledCipherSuites = (RscString<512>)sslOpts["enabled_cipher_suites"].get<std::string>();
+            if (sslOpts.contains("enable_server_cert_auth"))
+                opts.sslOptions.enableServerCertAuth = sslOpts["enable_server_cert_auth"].get<boolean>();
+        }
+        else
+        {
+            this->log.Info("No MQTT SSL/TLS Options provided. Defaults will be used.");
+        }
+
+        if (connectOpts.contains("is_clean_session"))
+            opts.isCleanSession = connectOpts["is_clean_session"].get<boolean>();
+        // TODO: Implement opts.servers
+        if (connectOpts.contains("mqtt_version"))
+            opts.mqttVersion = connectOpts["mqtt_version"].get<int32>();
+        if (connectOpts.contains("automatic_reconnect"))
+            opts.automaticReconnect = connectOpts["automatic_reconnect"].get<boolean>();
+        if (connectOpts.contains("min_retry_interval"))
+            opts.minRetryInterval = connectOpts["min_retry_interval"].get<int32>();
+        if (connectOpts.contains("max_retry_interval"))
+            opts.maxRetryInterval = connectOpts["max_retry_interval"].get<int32>();
+    }
+    else
+    {
+        this->log.Info("No MQTT Connect Options provided. Defaults will be used.");
+    }
+
+    // Remember some of the automatic connection options
+    this->retryInterval = opts.maxRetryInterval;
+    this->automaticReconnect = (this->retryInterval > 0 ? opts.automaticReconnect : false);
+
+    // Connect to the MQTT client
+    int32 mqttResponse = this->pMqttClientService->Connect(this->mqttClientId, opts);
+    if (mqttResponse == 0)
+    {
+        this->log.Info("Connected to MQTT Client {0}", this->mqttClientId);
+    }
+    else
+    {
+        this->log.Error("Error connecting to MQTT Client {0}", this->mqttClientId);
+    }
+
+    // Check all GDS ports for existence
+    // TODO: Handle more than the first broker!
+    // TODO: Check for empty arrays.
+    // TODO: Use the Namespace Navigator to get Port information, rather than ReadSingle!
+    // Iterate through the publish_data list
+    json * publishData = &this->config["brokers"][0]["publish_data"];
+    for (auto it = publishData->begin(); it != publishData->end(); ++it)
+    {
+        json publishRecord = it.value();
+        RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error != DataAccessError::None)
+        {
+            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            // Delete this port from the settings.
+            publishData->erase(it);
+            --it;  // because the iterator is incremented by the erase method.
+        }
+        else if (!IsSupported(portData.Value.GetType()))
+        {
+            this->log.Warning("Port {0} data type is not currently supported.", portName);
+            // Delete this port from the settings.
+            publishData->erase(it);
+            --it;  // because the iterator is incremented by the erase method.
+        }
+    }
+
+    // Iterate through the subscribe_data list
+    json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
+    for (json::iterator it = subscribeData->begin(); it != subscribeData->end(); ++it)
+    {
+        // Iterate through the ports that will be updated by this topic
+        json * subPorts = &it.value()["ports"];
+        for (json::iterator it2 = subPorts->begin(); it2 != subPorts->end(); ++it2)
+        {
+            RscString<512> portName = RscString<512>(it2.value());
+            ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+            // TODO: Check that all ports are the same data type!
+            if (portData.Error != DataAccessError::None)
+            {
+                this->log.Info("Port {0}: {1}", portName, portData.Error);
+                // Delete this port from the settings.
+                subPorts->erase(it2);
+                --it2;  // because the iterator is incremented by the erase method.
+            }
+            else if (!IsSupported(portData.Value.GetType()))
+            {
+                this->log.Warning("Port {0} data type is not currently supported.", portName);
+                // Delete this port from the settings.
+                publishData->erase(it2);
+                --it2;  // because the iterator is incremented by the erase method.
+            }
+            else
+            {
+                // Store the type information with the port data.
+                // This will be required when consuming MQTT messages.
+                // Note that this overwites the previous value, or creates it if it doesn't exist.
+                // TODO: Check that all port types are the same!
+                it.value()["type"] = (int)portData.Value.GetType();
+            }
+        }
+        // TODO: If there are no ports in this topic - e.g. because all ports in the topic are invalid - then delete the topic and move on.
+        // Otherwise, subscribe to this topic.
+        RscString<512> topic = RscString<512>(it.value()["topic"].get<std::string>());
+        if (this->pMqttClientService->IsConnected(this->mqttClientId))
+        {
+            int32 mqttResponse = this->pMqttClientService->Subscribe(this->mqttClientId, topic);
+            if (mqttResponse == 0)
+            {
+                this->log.Info("Subscribed to MQTT topic {0}", topic);
+            }
+            else
+            {
+                this->log.Error("Error subscribing to MQTT topic {0}", topic);
+            }
+        }
+        else
+        {
+            this->log.Error("MQTT Client is not connected. Cannot subscribe topic {0}", topic);
+        }
+    }
+}
 }} // end of namespace PxceTcs.Mqtt
