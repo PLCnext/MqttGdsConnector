@@ -678,6 +678,7 @@ void GdsConnectorComponent::Update()
         if (this->pMqttClientService->IsConnected(this->mqttClientId))
         {
             this->log.Info("Is connected. About to enter TryConsumeMessage while loop.");
+            if (false) {
             while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
             {
                 this->log.Info("In TryConsumeMessage while loop.");
@@ -710,6 +711,7 @@ void GdsConnectorComponent::Update()
                         }
                     }
                 }
+            }
             }
             this->log.Info("Is connected. Finished TryConsumeMessage while loop.");
         }
