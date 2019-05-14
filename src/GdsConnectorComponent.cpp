@@ -680,12 +680,11 @@ void GdsConnectorComponent::Update()
         this->log.Info("About to check IsConnected.");
 
         // Only check subscriptions if we have a connection to the broker.
-        // Also - this method crashed on the return from the Reconnect method,
+        // Also - this method crashes on the return from the Reconnect method,
         // so wait for one more Update cycle before calling after a reconnect ...
         if (this->pMqttClientService->IsConnected(this->mqttClientId) && this->IsConnected)
         {
             this->log.Info("Is connected. About to enter TryConsumeMessage while loop.");
-            if (false) {
             while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
             {
                 this->log.Info("In TryConsumeMessage while loop.");
@@ -718,7 +717,6 @@ void GdsConnectorComponent::Update()
                         }
                     }
                 }
-            }
             }
             this->log.Info("Is connected. Finished TryConsumeMessage while loop.");
         }
