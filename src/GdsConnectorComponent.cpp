@@ -609,6 +609,10 @@ void GdsConnectorComponent::Update()
             if (!this->pMqttClientService->IsConnected(this->mqttClientId))
             {
                 this->log.Info("Attempting MQTT client reconnect.");
+                // Note that if the broker can be contacted, this method blocks
+                // until the reconnect is successful.
+                // TODO: Understand what causes this to block ...
+                //       (for precisely 5 minutes when using the Mosquitto test broker)
                 this->pMqttClientService->Reconnect(this->mqttClientId);
                 this->log.Info("Called reconnect.");
             }
@@ -675,7 +679,10 @@ void GdsConnectorComponent::Update()
         this->log.Info("--------------------------");
         this->log.Info("About to check IsConnected.");
 
-        if (this->pMqttClientService->IsConnected(this->mqttClientId))
+        // Only check subscriptions if we have a connection to the broker.
+        // Also - this method crashed on the return from the Reconnect method,
+        // so wait for one more Update cycle before calling after a reconnect ...
+        if (this->pMqttClientService->IsConnected(this->mqttClientId) && this->IsConnected)
         {
             this->log.Info("Is connected. About to enter TryConsumeMessage while loop.");
             if (false) {
