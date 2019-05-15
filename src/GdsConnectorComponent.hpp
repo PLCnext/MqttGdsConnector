@@ -58,7 +58,7 @@ private: // methods
     GdsConnectorComponent(const GdsConnectorComponent& arg) = delete;
     GdsConnectorComponent& operator= (const GdsConnectorComponent& arg) = delete;
 
-    void MqttConnect();
+    void Subscribe();
 
 public: // static factory operations
     static IComponent::Ptr Create(Arp::System::Acf::IApplication& application, const String& name);
