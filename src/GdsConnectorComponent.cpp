@@ -620,11 +620,28 @@ void GdsConnectorComponent::Update()
         // Remember the value of the reconnect port for next time
         this->ReconnectMemory = this->Reconnect;
 
-        // Log successful reconnect
+        // Check for successful reconnect
         if (!this->IsConnected && this->pMqttClientService->IsConnected(this->mqttClientId))
         {
-            // Connection has just dropped.
+            // Connection has just been restored.
             this->log.Info("Connection to the server has been restored.");
+
+            // Subscribe to all topics again.
+            // Iterate through the subscribe_data list
+            json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
+            for (json::iterator it = subscribeData->begin(); it != subscribeData->end(); ++it)
+            {
+                RscString<512> topic = RscString<512>(it.value()["topic"].get<std::string>());
+                int32 mqttResponse = this->pMqttClientService->Subscribe(this->mqttClientId, topic);
+                if (mqttResponse == 0)
+                {
+                    this->log.Info("Subscribed to MQTT topic {0}", topic);
+                }
+                else
+                {
+                    this->log.Error("Error subscribing to MQTT topic {0}", topic);
+                }
+            }
 
             // Reset the automatic reconnect timer.
             this->secsToReconnect = this->retryInterval;
@@ -680,9 +697,7 @@ void GdsConnectorComponent::Update()
         this->log.Info("About to check IsConnected.");
 
         // Only check subscriptions if we have a connection to the broker.
-        // Also - this method crashes on the return from the Reconnect method,
-        // so wait for one more Update cycle before calling after a reconnect ...
-        if (this->pMqttClientService->IsConnected(this->mqttClientId) && this->IsConnected)
+        if (this->pMqttClientService->IsConnected(this->mqttClientId))
         {
             this->log.Info("Is connected. About to enter TryConsumeMessage while loop.");
             while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
