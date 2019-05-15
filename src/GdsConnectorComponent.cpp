@@ -168,10 +168,15 @@ void GdsConnectorComponent::LoadSettings(const String& settingsPath)
     // load firmware settings here
     this->settingsPath = settingsPath;
 	this->log.Info("Loaded settings: Path={0}", this->settingsPath);
+
+    // LoadSettings: Go!
+    this->allSystemsGo = true;
 }
 
 void GdsConnectorComponent::SubscribeServices()
 {
+    if (!this->allSystemsGo) return;
+
     // subscribe the services used by this component here
 
     // TODO: TryGetService first, and log a message if it fails.
@@ -180,10 +185,15 @@ void GdsConnectorComponent::SubscribeServices()
 
     this->pDataAccessService = ServiceManager::GetService<IDataAccessService>("Arp");
     this->log.Info("Subscribed to GDS Data Access Service.");
+
+    // SubscribeServices: Go!
+    this->allSystemsGo = true;
 }
 
 void GdsConnectorComponent::LoadConfig()
 {
+    if (!this->allSystemsGo) return;
+
     // load project config here
     // TODO: Error checking.
     std::ifstream settingsFile(this->settingsPath.GetBaseString(), ios_base::in);
@@ -193,6 +203,7 @@ void GdsConnectorComponent::LoadConfig()
     {
         // Settings file doesn't exist.
         this->log.Error("Configuration file {0} does not exist.", this->settingsPath);
+        this->allSystemsGo = false;
         return;
     }
 
@@ -212,6 +223,7 @@ void GdsConnectorComponent::LoadConfig()
     else if(awsSettingsSchemaFile) schemaFile = AWS_SCHEMA_FILE;
     else {
         this->log.Error("Configuration schema file does not exist.");
+        this->allSystemsGo = false;
         return;
     }
 
@@ -254,15 +266,22 @@ void GdsConnectorComponent::LoadConfig()
             }
             this->log.Error("Context: {0}, Description: {1}", context, error.description);
         }
+        this->allSystemsGo = false;
+        return;
     }
     else
     {
         this->log.Info("Configuration is valid.");
     }
+
+    // LoadConfig: Go!
+    this->allSystemsGo = true;
 }
 
 void GdsConnectorComponent::SetupConfig()
 {
+    if (!this->allSystemsGo) return;
+
     // Read the configuration
 
     // TODO: Error handling - especially JSON errors.
@@ -279,12 +298,16 @@ void GdsConnectorComponent::SetupConfig()
         if (!broker.contains("connect_options"))
         {
             this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+            this->allSystemsGo = false;
+            return;
         }
         else
         {
             if (!broker["connect_options"].contains("ssl_options"))
             {
                 this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+                this->allSystemsGo = false;
+                return;
             }
         }
     }
@@ -296,15 +319,19 @@ void GdsConnectorComponent::SetupConfig()
         ReadItem portData = this->pDataAccessService->ReadSingle(portName);
         if (portData.Error != DataAccessError::None)
         {
-            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             broker.erase("status_port");
+            this->allSystemsGo = false;
+            return;
         }
         else if (portData.Value.GetType() != RscType::Bool)
         {
             this->log.Error("Status port {0} is not of type Bool.", portName);
             // Delete this port from the settings.
             broker.erase("status_port");
+            this->allSystemsGo = false;
+            return;
         }
     }
     else
@@ -319,15 +346,19 @@ void GdsConnectorComponent::SetupConfig()
         ReadItem portData = this->pDataAccessService->ReadSingle(portName);
         if (portData.Error != DataAccessError::None)
         {
-            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             broker.erase("reconnect_port");
+            this->allSystemsGo = false;
+            return;
         }
         else if (portData.Value.GetType() != RscType::Bool)
         {
             this->log.Error("Reconnect port {0} is not of type Bool.", portName);
             // Delete this port from the settings.
             broker.erase("reconnect_port");
+            this->allSystemsGo = false;
+            return;
         }
     }
     else
@@ -354,6 +385,8 @@ void GdsConnectorComponent::SetupConfig()
     else
     {
         this->log.Error("Error creating MQTT Client with URL {0} and client name {1}", host, clientName);
+        this->allSystemsGo = false;
+        return;
     }
 
     // Create and initialise a connect options structure
@@ -448,6 +481,8 @@ void GdsConnectorComponent::SetupConfig()
     else
     {
         this->log.Error("Error connecting to MQTT Client {0}", this->mqttClientId);
+        this->allSystemsGo = false;
+        return;
     }
 
     // Check all GDS ports for existence
@@ -463,17 +498,21 @@ void GdsConnectorComponent::SetupConfig()
         ReadItem portData = this->pDataAccessService->ReadSingle(portName);
         if (portData.Error != DataAccessError::None)
         {
-            this->log.Info("Port {0}: {1}", portName, portData.Error);
+            this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             publishData->erase(it);
             --it;  // because the iterator is incremented by the erase method.
+            this->allSystemsGo = false;
+            return;
         }
         else if (!IsSupported(portData.Value.GetType()))
         {
-            this->log.Warning("Port {0} data type is not currently supported.", portName);
+            this->log.Error("Port {0} data type is not currently supported.", portName);
             // Delete this port from the settings.
             publishData->erase(it);
             --it;  // because the iterator is incremented by the erase method.
+            this->allSystemsGo = false;
+            return;
         }
     }
 
@@ -490,17 +529,21 @@ void GdsConnectorComponent::SetupConfig()
             // TODO: Check that all ports are the same data type!
             if (portData.Error != DataAccessError::None)
             {
-                this->log.Info("Port {0}: {1}", portName, portData.Error);
+                this->log.Error("Port {0}: {1}", portName, portData.Error);
                 // Delete this port from the settings.
                 subPorts->erase(it2);
                 --it2;  // because the iterator is incremented by the erase method.
+                this->allSystemsGo = false;
+                return;
             }
             else if (!IsSupported(portData.Value.GetType()))
             {
-                this->log.Warning("Port {0} data type is not currently supported.", portName);
+                this->log.Error("Port {0} data type is not currently supported.", portName);
                 // Delete this port from the settings.
                 publishData->erase(it2);
                 --it2;  // because the iterator is incremented by the erase method.
+                this->allSystemsGo = false;
+                return;
             }
             else
             {
@@ -514,11 +557,18 @@ void GdsConnectorComponent::SetupConfig()
     }
 
     // Subscribe to all topics
-    Subscribe();
+    if (!Subscribe())
+    {
+        this->allSystemsGo = false;
+        return;
+    }
 
     // Start the worker thread
 	this->updateThread.Start();
 	this->log.Info("SetupConfig(): Worker thread has been started.");
+
+    // SetupConfig: Go!
+    this->allSystemsGo = true;
 }
 
 void GdsConnectorComponent::ResetConfig()
@@ -547,179 +597,172 @@ void GdsConnectorComponent::Update()
 
     this->log.Info("cycles = {0} : seconds = {1} : secPulse = {2}", this->cycles, seconds, secPulse);
 
-    // Don't process anything else if this method is currently blocked.
-    if (this->IsBlocked)
+    // Look for a connection drop-out
+    // TODO: Handle more than the first broker!
+    json broker = this->config["brokers"][0];
+
+    if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
     {
-        this->log.Warning("MQTT update is blocking!");
+        // Connection has just dropped.
+        this->log.Info("Connection to the server has been lost.");
+
+        // Reset the automatic reconnect timer.
+        this->secsToReconnect = this->retryInterval;
     }
-    else
+
+    // Decrement the automatic reconnect timer and reset if necessary
+    if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
+
+    // Process input ports
+    if (broker.contains("reconnect_port"))
     {
-        this->IsBlocked = true;
-
-        // Look for a connection drop-out
-        // TODO: Handle more than the first broker!
-        json broker = this->config["brokers"][0];
-
-        if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
+        RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error == DataAccessError::None)
         {
-            // Connection has just dropped.
-            this->log.Info("Connection to the server has been lost.");
-
-            // Reset the automatic reconnect timer.
-            this->secsToReconnect = this->retryInterval;
+            portData.Value.CopyTo(this->Reconnect);
         }
-
-        // Decrement the automatic reconnect timer and reset if necessary
-        if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
-
-        // Process input ports
-        if (broker.contains("reconnect_port"))
+        else
         {
-            RscString<512> portName = RscString<512>(broker["reconnect_port"].get<std::string>());
-            ReadItem portData = this->pDataAccessService->ReadSingle(portName);
-            if (portData.Error == DataAccessError::None)
-            {
-                portData.Value.CopyTo(this->Reconnect);
-            }
-            else
-            {
-                this->log.Error("Port {0}: {1}", portName, portData.Error);
-            }
+            this->log.Warning("Port {0}: {1}", portName, portData.Error);
         }
+    }
 
-        // Check for manual or automatic reconnect attempts
-        if (this->Reconnect && !this->ReconnectMemory
-            || this->automaticReconnect && this->secsToReconnect == 0)
+    // Check for manual or automatic reconnect attempts
+    if (this->Reconnect && !this->ReconnectMemory
+        || this->automaticReconnect && this->secsToReconnect == 0)
+    {
+        // Only try to reconnect if currently disconnected
+        if (!this->pMqttClientService->IsConnected(this->mqttClientId))
         {
-            // Only try to reconnect if currently disconnected
-            if (!this->pMqttClientService->IsConnected(this->mqttClientId))
-            {
-                this->log.Info("Attempting MQTT client reconnect.");
-                // Note that if the broker can be contacted, this method blocks
-                // until the reconnect is successful.
-                // TODO: Understand what causes this to block ...
-                //       (for precisely 5 minutes when using the Mosquitto test broker)
-                this->pMqttClientService->Reconnect(this->mqttClientId);
-            }
+            this->log.Info("Attempting MQTT client reconnect.");
+            // Note that if the broker can be contacted, this method blocks
+            // until the reconnect is successful.
+            // TODO: Understand what causes this to block ...
+            //       (for precisely 5 minutes when using the Mosquitto test broker)
+            this->pMqttClientService->Reconnect(this->mqttClientId);
         }
-        // Remember the value of the reconnect port for next time
-        this->ReconnectMemory = this->Reconnect;
+    }
+    // Remember the value of the reconnect port for next time
+    this->ReconnectMemory = this->Reconnect;
 
-        // Check for successful reconnect
-        if (!this->IsConnected && this->pMqttClientService->IsConnected(this->mqttClientId))
+    // Check for successful reconnect
+    if (!this->IsConnected && this->pMqttClientService->IsConnected(this->mqttClientId))
+    {
+        // Connection has just been restored.
+        this->log.Info("Connection to the server has been restored.");
+
+        // Subscribe to all topics again.
+        // Note: If this fails, errors are logged but the app continues to run.
+        Subscribe();
+
+        // Reset the automatic reconnect timer.
+        this->secsToReconnect = this->retryInterval;
+    }
+
+    // Publish all GDS data on every scan cycle.
+    // TODO: Think about subscribing to GDS ports instead.
+    // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
+    // Iterate through the publish_data list
+    json * publishData = &this->config["brokers"][0]["publish_data"];
+    if (this->pMqttClientService->IsConnected(this->mqttClientId))
+    {
+        for (auto it : publishData->items())
         {
-            // Connection has just been restored.
-            this->log.Info("Connection to the server has been restored.");
+            json publishRecord = it.value();
+            RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
+            int32 period = (publishRecord.contains("period") ? publishRecord["period"].get<int32>() : -1);
+            int32 qos = publishRecord["qos"].get<int32>();
+            boolean retained = publishRecord["retained"].get<boolean>();
 
-            // Subscribe to all topics again.
-            Subscribe();
-
-            // Reset the automatic reconnect timer.
-            this->secsToReconnect = this->retryInterval;
-        }
-
-        // Publish all GDS data on every scan cycle.
-        // TODO: Think about subscribing to GDS ports instead.
-        // OR using the Read() method with Delegates to read multiple data items (including arrays and ... structs?)
-        // Iterate through the publish_data list
-        json * publishData = &this->config["brokers"][0]["publish_data"];
-        if (this->pMqttClientService->IsConnected(this->mqttClientId))
-        {
-            for (auto it : publishData->items())
+            this->log.Info("Seconds = {0} : Period = {1} : seconds % period = {2}", seconds, period, seconds % period);
+            // Publish each record when required
+            if (period == -1 || seconds % period == 0)
             {
-                json publishRecord = it.value();
-                RscString<512> portName = RscString<512>(publishRecord["port"].get<std::string>());
-                int32 period = (publishRecord.contains("period") ? publishRecord["period"].get<int32>() : -1);
-                int32 qos = publishRecord["qos"].get<int32>();
-                boolean retained = publishRecord["retained"].get<boolean>();
+                // Read the current value of the port variable
+                ReadItem portData = this->pDataAccessService->ReadSingle(portName);
 
-                this->log.Info("Seconds = {0} : Period = {1} : seconds % period = {2}", seconds, period, seconds % period);
-                // Publish each record when required
-                if (period == -1 || seconds % period == 0)
+                // TODO: Check for DataAccessErrors
+
+                // Iterate through the topics that the message will be published to
+                json * pubTopics = &it.value()["topics"];
+                for (auto it2 : pubTopics->items())
                 {
-                    // Read the current value of the port variable
-                    ReadItem portData = this->pDataAccessService->ReadSingle(portName);
-
-                    // TODO: Check for DataAccessErrors
-
-                    // Iterate through the topics that the message will be published to
-                    json * pubTopics = &it.value()["topics"];
-                    for (auto it2 : pubTopics->items())
+                    // Publish the data
+                    size_t length = Sizeof(portData.Value);
+                    int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
+                    if (response != 0)
                     {
-                        // Publish the data
-                        size_t length = Sizeof(portData.Value);
-                        int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
-                        if (response != 0)
+                        this->log.Warning("Could not publish to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                    }
+                }
+            }
+        }
+    }
+
+    // Check if any MQTT subscription data has arrived.
+    // Loop until the queue is empty.
+    // TODO: Put a limit on this loop!
+    // TODO: Consider consolidating all messages and writing all together using the Write() method
+    //    ... so that we can also write arrays and ... structs?
+    Message msg;
+
+    // Only check subscriptions if we have a connection to the broker.
+    if (this->pMqttClientService->IsConnected(this->mqttClientId))
+    {
+        while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
+        {
+            // Write to each of the Ports configured for this topic.
+            // Iterate through the subscribe_data list
+            json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
+            for (auto it : subscribeData->items())
+            {
+                if (it.value()["topic"].get<std::string>() == msg.topic.CStr())
+                {
+                    // Get the RscVariant type for this topic,
+                    // and assign this to the incoming message payload.
+                    // TODO: CHECK THAT THE LENGTH OF THE PAYLOAD MATCHES THE DATA TYPE!
+                    // TODO: CHECK THAT THIS TYPE CAST IS NECESSARY
+                    msg.payload.SetType((RscType)it.value()["type"].get<int>());
+
+                    // Iterate through the ports that will be updated by this topic.
+                    json * subPorts = &it.value()["ports"];
+                    for (auto it2 : subPorts->items())
+                    {
+                        // Write the MQTT message payload to the GDS port.
+                        WriteItem writePortData;
+                        writePortData.PortName = RscString<512>(it2.value());
+                        writePortData.Value = RscVariant<512>(msg.payload);
+                        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+                        if (result != DataAccessError::None)
                         {
-                            this->log.Error("Error publishing to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                            this->log.Warning("Could not write to port {0}: {1}", it2.value(), result);
                         }
                     }
                 }
             }
         }
+    }
 
-        // Check if any MQTT subscription data has arrived.
-        // Loop until the queue is empty.
-        // TODO: Put a limit on this loop!
-        // TODO: Consider consolidating all messages and writing all together using the Write() method
-        //    ... so that we can also write arrays and ... structs?
-        Message msg;
-
-        // Only check subscriptions if we have a connection to the broker.
-        if (this->pMqttClientService->IsConnected(this->mqttClientId))
+    // Update output ports
+    this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
+    if (broker.contains("status_port"))
+    {
+        WriteItem writePortData;
+        writePortData.PortName = RscString<512>(broker["status_port"].get<std::string>());
+        writePortData.Value = RscVariant<512>(this->IsConnected);
+        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+        if (result != DataAccessError::None)
         {
-            while (this->pMqttClientService->TryConsumeMessage(this->mqttClientId, msg) == 1)
-            {
-                // Write to each of the Ports configured for this topic.
-                // Iterate through the subscribe_data list
-                json * subscribeData = &this->config["brokers"][0]["subscribe_data"];
-                for (auto it : subscribeData->items())
-                {
-                    if (it.value()["topic"].get<std::string>() == msg.topic.CStr())
-                    {
-                        // Get the RscVariant type for this topic,
-                        // and assign this to the incoming message payload.
-                        // TODO: CHECK THAT THE LENGTH OF THE PAYLOAD MATCHES THE DATA TYPE!
-                        // TODO: CHECK THAT THIS TYPE CAST IS NECESSARY
-                        msg.payload.SetType((RscType)it.value()["type"].get<int>());
-
-                        // Iterate through the ports that will be updated by this topic.
-                        json * subPorts = &it.value()["ports"];
-                        for (auto it2 : subPorts->items())
-                        {
-                            // Write the MQTT message payload to the GDS port.
-                            WriteItem writePortData;
-                            writePortData.PortName = RscString<512>(it2.value());
-                            writePortData.Value = RscVariant<512>(msg.payload);
-                            DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
-                            if (result != DataAccessError::None)
-                            {
-                                this->log.Error("Error writing to port {0}: {1}", it2.value(), result);
-                            }
-                        }
-                    }
-                }
-            }
+            this->log.Warning("Could not write to port {0}: {1}", broker["status_port"].get<std::string>(), result);
         }
-
-        // Update output ports
-        this->IsConnected = this->pMqttClientService->IsConnected(this->mqttClientId);
-        if (broker.contains("status_port"))
-        {
-            WriteItem writePortData;
-            writePortData.PortName = RscString<512>(broker["status_port"].get<std::string>());
-            writePortData.Value = RscVariant<512>(this->IsConnected);
-            DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
-        }
-
-        this->IsBlocked = false;
     }
 
     // Increment the runtime counter and reset if necessary
     if (++(this->cycles) >= MAX_CYCLES) this->cycles = 0;
 }
 
-void GdsConnectorComponent::Subscribe()
+bool GdsConnectorComponent::Subscribe()
 {
     // TODO: Handle more than just the first broker in the list!
     // Iterate through the subscribe_data list
@@ -739,12 +782,15 @@ void GdsConnectorComponent::Subscribe()
             else
             {
                 this->log.Error("Error subscribing to MQTT topic {0}", topic);
+                return false;
             }
         }
         else
         {
             this->log.Error("MQTT Client is not connected. Cannot subscribe topic {0}", topic);
+            return false;
         }
     }
+    return true;
 }
 }} // end of namespace PxceTcs.Mqtt

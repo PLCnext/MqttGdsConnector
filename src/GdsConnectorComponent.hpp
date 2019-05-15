@@ -74,6 +74,9 @@ private: // fields
 
     json config;
 
+    // Flag that reflects the current status
+    boolean allSystemsGo = true;
+
     boolean automaticReconnect = false;
     int32 retryInterval = 0;
     int32 secsToReconnect;
