@@ -627,8 +627,6 @@ void GdsConnectorComponent::Update()
         this->secsToReconnect = this->retryInterval;
     }
 
-    this->log.Info("Retry Interval = {0} : Seconds to Reconnect = {1}", this->retryInterval, this->secsToReconnect);
-
     // Process input ports
     if (broker.contains("reconnect_port"))
     {
