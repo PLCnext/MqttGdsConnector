@@ -181,6 +181,8 @@ A valid configuration consists of an array of broker objects. Each broker object
 
 The following is a list of all available broker properties. Optional properties that do not appear in the configuration file will be given default values.
 
+NOTE: If the application encounters any error during startup, then it will immediately stop. For example, any error in the configuration, including missing GDS ports or GDS ports with unsupported types, will halt the application. In this case, check the Ouput.log file for a description of the error. After the error is corrected, the PLC must be restarted.
+
 -----------
 #### broker properties
 
