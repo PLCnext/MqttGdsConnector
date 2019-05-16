@@ -646,7 +646,7 @@ void GdsConnectorComponent::Update()
 
     // Check for manual or automatic reconnect attempts
     if (this->Reconnect && !this->ReconnectMemory
-        || this->automaticReconnect && this->secsToReconnect == 0)
+        || this->automaticReconnect && this->secsToReconnect == 0 && secPulse)
     {
         // Only try to reconnect if currently disconnected
         if (!this->pMqttClientService->IsConnected(this->mqttClientId))
