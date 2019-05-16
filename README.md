@@ -299,7 +299,7 @@ Examples of configuration files that you can use as a starting point for your ow
 
 ## Known issues
 
-None.
+When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely 300 seconds before continuing execution as normal.
 
 -----------
 
