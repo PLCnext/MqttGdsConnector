@@ -598,8 +598,6 @@ void GdsConnectorComponent::Update()
     // Generate a pulse (approximately) every second
     boolean secPulse = (this->cycles % CYCLES_PER_SECOND == 0);
 
-    this->log.Info("cycles = {0} : seconds = {1} : secPulse = {2}", this->cycles, seconds, secPulse);
-
     // Look for a connection drop-out
     // TODO: Handle more than the first broker!
     json broker = this->config["brokers"][0];
@@ -624,6 +622,8 @@ void GdsConnectorComponent::Update()
         // Reset the automatic reconnect timer.
         this->secsToReconnect = this->retryInterval;
     }
+
+    this->log.Info("Retry Interval = {0} : Seconds to Reconnect = {1}", this->retryInterval, this->secsToReconnect);
 
     // Process input ports
     if (broker.contains("reconnect_port"))
@@ -687,7 +687,6 @@ void GdsConnectorComponent::Update()
             int32 qos = publishRecord["qos"].get<int32>();
             boolean retained = publishRecord["retained"].get<boolean>();
 
-            this->log.Info("Seconds = {0} : Period = {1} : seconds % period = {2}", seconds, period, seconds % period);
             // Publish each record when required
             if (period == -1 || (seconds % period == 0 && secPulse))
             {
