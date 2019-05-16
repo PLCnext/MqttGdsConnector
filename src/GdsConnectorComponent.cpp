@@ -472,6 +472,9 @@ void GdsConnectorComponent::SetupConfig()
     this->retryInterval = opts.maxRetryInterval;
     this->automaticReconnect = (this->retryInterval > 0 ? opts.automaticReconnect : false);
 
+    // Initialise the automatic reconnect timer.
+    this->secsToReconnect = this->retryInterval;
+
     // Connect to the MQTT client
     int32 mqttResponse = this->pMqttClientService->Connect(this->mqttClientId, opts);
     if (mqttResponse == 0)
@@ -601,17 +604,26 @@ void GdsConnectorComponent::Update()
     // TODO: Handle more than the first broker!
     json broker = this->config["brokers"][0];
 
+    // Handle disconnects and reconnects
     if (this->IsConnected && !this->pMqttClientService->IsConnected(this->mqttClientId))
     {
         // Connection has just dropped.
         this->log.Info("Connection to the server has been lost.");
+    }
 
+    if (!this->pMqttClientService->IsConnected(this->mqttClientId))
+    {
+        if (this->secPulse)
+        {
+            // Decrement the automatic reconnect timer and reset if necessary
+            if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
+        }
+    }
+    else
+    {
         // Reset the automatic reconnect timer.
         this->secsToReconnect = this->retryInterval;
     }
-
-    // Decrement the automatic reconnect timer and reset if necessary
-    if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
 
     // Process input ports
     if (broker.contains("reconnect_port"))
@@ -677,7 +689,7 @@ void GdsConnectorComponent::Update()
 
             this->log.Info("Seconds = {0} : Period = {1} : seconds % period = {2}", seconds, period, seconds % period);
             // Publish each record when required
-            if (period == -1 || seconds % period == 0)
+            if (period == -1 || (seconds % period == 0 && secPulse)
             {
                 // Read the current value of the port variable
                 ReadItem portData = this->pDataAccessService->ReadSingle(portName);
