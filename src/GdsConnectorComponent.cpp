@@ -613,7 +613,7 @@ void GdsConnectorComponent::Update()
 
     if (!this->pMqttClientService->IsConnected(this->mqttClientId))
     {
-        if (this->secPulse)
+        if (secPulse)
         {
             // Decrement the automatic reconnect timer and reset if necessary
             if (--(this->secsToReconnect) < 0) this->secsToReconnect = this->retryInterval;
@@ -689,7 +689,7 @@ void GdsConnectorComponent::Update()
 
             this->log.Info("Seconds = {0} : Period = {1} : seconds % period = {2}", seconds, period, seconds % period);
             // Publish each record when required
-            if (period == -1 || (seconds % period == 0 && secPulse)
+            if (period == -1 || (seconds % period == 0 && secPulse))
             {
                 // Read the current value of the port variable
                 ReadItem portData = this->pDataAccessService->ReadSingle(portName);
