@@ -380,7 +380,11 @@ void GdsConnectorComponent::SetupConfig()
         // The value should be different depending on the underlying type of network and connection
         // e.g. higher for a satellite phone, lower for a LAN.
         if (broker.contains("timeout"))
-            this->pMqttClientService->SetTimeout(this->mqttClientId, broker["timeout"].get<int32>());
+        {
+            int32 timeout = broker["timeout"].get<int32>();
+            this->pMqttClientService->SetTimeout(this->mqttClientId, timeout);
+            this->log.Info("Global timeout value has been set to {0} milliseconds", timeout);
+        }
     }
     else
     {
