@@ -151,7 +151,7 @@ Name            | Required | JSON type        | Description
 :---            | :---     | :---             | :---
 host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
 clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
-timeout         | No       | integer          | Client timeout value in milliseconds.
+timeout         | No       | integer          | Client timeout value in milliseconds (default: 300000, i.e. 300 seconds).
 status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.<sup>2</sup>
 reconnect_port  | No       | string           | The name of a boolean GDS port that, on a rising edge, will trigger a reconnect attempt.<sup>2</sup>
 connect_options | Yes      | object           | The connection options. See table below.
@@ -174,8 +174,8 @@ Notes:
 -----------
 #### connect_options
 
-Name                | Required | JSON type | Description
-:---                | :---     | :---      | :---
+Name                | Required | JSON type | Default value | Description
+:---                | :---     | :---      | :---          |
 keep_alive_interval | No       | integer   | 60            | The keep alive interval in seconds.
 connect_timeout     | No       | integer   | 30            | The connect timeout in seconds.
 username            | No       | string    | NULL          | The user name to use for the connection.
@@ -263,7 +263,7 @@ Examples of configuration files that you can use as a starting point for your ow
 
 ## Known issues
 
-When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely 300 seconds before continuing execution as normal.
+When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
 
 
 ## Source code
