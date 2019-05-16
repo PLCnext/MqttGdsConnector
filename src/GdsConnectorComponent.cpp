@@ -572,7 +572,7 @@ void GdsConnectorComponent::SetupConfig()
 
     // Start the worker thread
 	this->updateThread.Start();
-	this->log.Info("SetupConfig(): Worker thread has been started.");
+	this->log.Info("Worker thread has been started.");
 
     // SetupConfig: Go!
     this->allSystemsGo = true;
