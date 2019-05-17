@@ -15,7 +15,7 @@
 
 MQTT GDS Connector is a PLCnext Technology component, that exchanges data between Global Data Space (GDS) ports and MQTT server topics. 
 
-![PLCnext Engineer Port Example](\images\PLCnEng_Port_Example.jpg)
+![PLCnext Engineer Port Example](images/PLCnEng_Port_Example.jpg)
 
 The component is configured with the file `mqtt_gds.settings.json` which is stored localy on the device. 
 
@@ -50,37 +50,30 @@ The component is configured with the file `mqtt_gds.settings.json` which is stor
 }
 ```
 
-Data in this file must conform to a defined JSON schema, if not will the app not start and post an error desciption in the output.log file which can be foun
+The entries in this file must conform to the defined JSON schema. Ff not will the app not start and post an error desciption in the output.log file which can be found in the following directory on the device.
+
+/opt/plcnext/logs/output.log
 
 The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target. 
 
 
 ## Requirements
 
-This component is designed for the AXC F 2152 controller with minimum firmware version 2019.3.
-
+* AXC F 2152 with minimum firmware version 2019.3
+* Valid account for the PLCnext Store with payment credentials (not needed for the trial version)
+* The PLCnext Control must be connected to the internet and must be registered in the PLCnext Store
 
 ## Features
 
-The component can connect to a single MQTT broker using TCP or WebSockets, over an unencrypted or an encrypted (SSL/TLS) connection.
+* The MQTT Client app is compatible with version 3.1 and 3.1.1
+* Support of TCP and Websockets over an unencrypted or an encrypted (SSL/TLS) connection
+* Automatic reconnect to the MQTT Broker
+* Easy handling due to GDS port mapping, no further configuration effort
+* Cyclic update of Publish Topics, individually adjustable (minimum 500ms)
+* Support of the following data types (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String*, DateTime)
 
-Only one client, and one concurrent server connection, is currently supported.
 
-If the connection to the server is lost, then the client can attempt to reconnect automatically - see the `connect_options` table below. If automatic_reconnect is TRUE, and max_retry_interval is non-zero, then the client will continue reconnection attempts every `max_retry_interval` until the connection is re-established. In addition, a reconnection attempt is made on every rising edge of the `reconnect_port` GDS variable.
-
-The client will publish the value of each configured GDS ports at the specified frequency. Data from each GDS port can be published to multiple MQTT topics.
-
-The client will subscribe to all configured MQTT topics. The payload from any new message on a subscribed MQTT topic can be written to one or more GDS ports.
-
-There are no checks done on incoming MQTT message payloads. It is the users responsibility to ensure that messages on each subscribed topic contain payload data that is compatible with all the GDS ports associated with that subscription.
-
-The following GDS data types are currently supported: Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String, DateTime.
-
-'String' data is always published with a terminating NULL character.
-
-When subscribing to 'String' data, incoming message payloads must always include a terminating NULL character.
-
-Complex data types (including Arrays and Structures) are not currently supported.
+**String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
 
 
 ## Contributing
@@ -111,39 +104,37 @@ $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf215
 $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf2152-2019.3 --config Debug --target install -- -j 3
 ```
 
-## Installing
+## Installing manualy
+**Note** The follwoing steps are only needed when you build the application by yourself without using the PLCnext Store. Phoenix Contact recommend the usage of the PLCnext Store.
 
-Copy the contents of `external/deploy/axcf2152` to `/usr/local` on the target.
 
-Copy `libGdsConnector.so` to `/usr/local/lib` on the target.
-
-Copy `libs/MqttGdsConnector.acf.config` to `/opt/plcnext/projects/Default` on the target.
-
-Copy the file `mqtt_gds.schema.json` to `/opt/plcnext/apps/60002172000048/` on the target.
-
-Copy a valid configuration file named `mqtt_gds.settings.json` to `/opt/plcnext/projects/MqttClient` on the target.
-
-Reboot the target.
+1. Copy the contents of `external/deploy/axcf2152` to `/usr/local` on the target.
+1. Copy `libGdsConnector.so` to `/usr/local/lib` on the target.
+1. Copy `libs/MqttGdsConnector.acf.config` to `/opt/plcnext/projects/Default` on the target.
+1. Copy the file `mqtt_gds.schema.json` to `/opt/plcnext/apps/60002172000048/` on the target.
+1. Copy a valid configuration file named `mqtt_gds.settings.json` to `/opt/plcnext/projects/MqttClient` on the target.
+1. Reboot the target.
 
 ## Quick start
 
-This example exchanges data between a PLC and an iPhone or iPad via a public MQTT broker, over an unencrypted connection. It requires a PLC that is connected to the internet, and a PC with access to both the PLC and the internet. For this example, the PC must have PLCnext Engineer software installed.
+This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* (both MQTT Clients) via a public MQTT broker, over an unencrypted connection. It requires a PLC that is connected to the internet, and a PC with access to both the PLC and the internet. For this example, the PC must have PLCnext Engineer software installed.
 
-1. Create an IEC 61131 project in PLCnext Engineer version 2019.3, with the following features:
-   - One AXC F 2152 PLC with firmware version 2019.3
+**There are many other free MQTT Test Clients for Android, Windows or Linux available*
+
+
+1. Make sure that your AXC F 2152 has a firmware >=2019.3 and that it has an internet connection
+1. Register yourself and your AXC F 2152 in the PLCnext Store (www.plcnextstore.com) - not necessary when the app is installed manualy
+1. Deploy the app via the PLCnext Store (recommend) or manualy
+1. Create an IEC 61131 project in PLCnext Engineer version 2019.3, with the following configuration:
+   - One AXC F 2152 PLC with firmware version >=2019.0
    - one program called "Main"
    - one program OUT port called "PubMessage" of type STRING
    - one program IN port called "SubMessage" of type STRING
    - one instance of the Main program, called "MainInstance"
-
 1. Download the PLCnext Engineer project to the PLC.
-
 1. Go online to the PLC and change the value of the "PubMessage" variable in the "MainInstance" program instance.
-
 1. Install the [MQTTool app](https://itunes.apple.com/us/app/mqttool/id1085976398) on an iPhone or iPad.
-
 1. Open the MQTTool app and connect to the public Mosquitto test broker (test.mosquitto.org, port 1883).
-
 1. On a PC, create a text file named `mqtt_gds.settings.json`, containing the following configuration:
 
    ```json
@@ -177,21 +168,16 @@ This example exchanges data between a PLC and an iPhone or iPad via a public MQT
    In the configuration file, change the `client_name` property to a value that is likely to be unique on a public server.
 
    Change the publish and subscribe `topic` properties to values that are likely to be unique on a public server.
-
 1. Using WinSCP (Windows) or `scp` (Linux), copy the `mqtt_gds.settings.json` file to the following directory on the PLC: `/opt/plcnext/projects/MqttClient/`. Create this directory on the PLC if it does not exist already.
 
    The default login credentials for the PLC are:
    - User name : admin
    - Password  : &lt;printed on the PLC housing&gt;
 
-   Make sure that the file has 'read' privileges for all users on the PLC.
 
 1. Restart the PLC.
-
 1. In the MQTTool app on the iPhone or iPad, subscribe to the topic name that was entered in the `publish_data` section of the configuration file (e.g. "MyPubTopic").
-
 1. The messages received on the iPhone or iPad now show the value of the PubMessage variable in the PLC.
-
 1. On the iPhone or iPad, publish a message to the topic that was entered in the `subscribe_data` section of the configuration file (e.g. "MySubTopic"). This message now appears as the value of the SubMessage variable in the PLC.
 
 
@@ -335,10 +321,13 @@ Note:
 
 Examples of configuration files that you can use as a starting point for your own project are available [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
 
+## Error handling 
+kommt noch
 
-## Known issues
-
-When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
+## Known issues and limitations
+* Only one client, and one concurrent server connection, is currently supported
+* When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
+* Complex data types (including Arrays and Structures) are not currently supported.
 
 -----------
 
