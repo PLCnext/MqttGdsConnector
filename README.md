@@ -13,7 +13,44 @@
 
 ## Description
 
-MQTT GDS Connector is a PLCnext Technology component that that exchanges data between Global Data Space (GDS) ports and MQTT server topics. The component is configured with the file `mqtt_gds.settings.json`. Data in this file must conform to a defined JSON schema.
+MQTT GDS Connector is a PLCnext Technology component, that exchanges data between Global Data Space (GDS) ports and MQTT server topics. 
+
+![PLCnext Engineer Port Example](\images\PLCnEng_Port_Example.jpg)
+
+The component is configured with the file `mqtt_gds.settings.json` which is stored localy on the device. 
+
+```json
+{ "brokers":[{
+    "host": "tcp://test.mosquitto.org:1883",
+    "client_name": "MQTT_Test_App",
+	"status_port": "Arp.Plc.Eclr/TestBench1.MQTT_Broker_Status",
+    "connect_options":{
+      "will_options":{
+        "topic": "last_will_topic",
+        "payload": "auf wiedersehen"
+      }
+    },
+    "publish_data":[{
+      "port"   : "Arp.Plc.Eclr/TestBench1.PubLoadTestBool",
+      "qos": 0,
+      "retained": false,
+      "topics" :[
+        "LoadTestBool"
+      ]
+    }
+],
+    "subscribe_data":[{
+      "topic" : "LoadTestBool",
+      "ports" :[
+        "Arp.Plc.Eclr/TestBench1.SubLoadTestBool"
+      ]
+    }
+]
+  }]
+}
+```
+
+Data in this file must conform to a defined JSON schema, if not will the app not start and post an error desciption in the output.log file which can be foun
 
 The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target. 
 
