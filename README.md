@@ -210,7 +210,7 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 
 
 -----------
-### broker properties
+### Broker properties
 A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
 
 **Note:** The MQTT Client version 1.1 does only support one MQTT Broker connection.
@@ -239,7 +239,7 @@ subscribe_data  | No       | array of objects | MQTT subscribe information. See 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of a port variable defined in that program.
 
 -----------
-#### connect_options
+#### Connect_options
 
 Name                | Required | JSON type | Default value | Description
 :---                | :---     | :---      | :---          | :---
@@ -256,7 +256,7 @@ ssl_options         | No       | object    |               | The SSL options to 
    - 4 = only try version 3.1.1
 
 -----------
-#### will_options
+#### Will_options
 
 Name     | Required | JSON type | Description
 :---     | :---     | :---      | :---
@@ -266,7 +266,7 @@ qos      | No       | integer   | The message Quality of Service.
 retained | No       | boolean   | Tell the broker to keep the LWT message after send to subscribers.
 
 -----------
-#### ssl_options
+#### Ssl_options
 The ssl option is only needed when an encrypted *ssl* communication should be used. Depending on the MQTT Broker policies might different configuration needed.
 
 Name                    | Required | JSON type | Description
@@ -319,6 +319,7 @@ The following examples show two broker configurations. One is a simple unencrypt
     }
   }]
 }
+```
 *Configuration example for an encrypted configuration*```
 
 -----------
@@ -330,8 +331,8 @@ Name     | Required | JSON type        | Description
 :---     | :---     | :---             | :---
 port     | Yes      | string           | The 'OUT' port from which data will be published<sup>1</sup>.
 period   | No       | integer          | The publish frequency in seconds (max 86,400). If not specified, period=500ms.
-qos      | Yes      | integer          | The message Quality of Service.
-retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers.
+qos      | Yes      | integer          | The message Quality of Service<sup>2</sup>.
+retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers<sup>3</sup>.
 topics   | Yes      | array of strings | Message are published to all these topics.
 
 **Note:**
@@ -340,6 +341,26 @@ topics   | Yes      | array of strings | Message are published to all these topi
    *Arp.Plc.Eclr/ProgramInstance.PortName*
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
+1. The MQTT app version 1.1 does only support QoS 0
+1. The MQTT app version 1.1 does not support 'retained'.
+
+
+#### Publish_data configuration example
+The following example shows how a valid configuration.
+
+**Note:** Make sure that the assigned GDS port exist and that the data type is correct. A wrong configruation will prevent the app from starting.
+
+   ```json
+    "publish_data":[{
+      "port"   : "Arp.Plc.Eclr/TestBench1.PubLoadTestBool",
+      "qos": 0,
+      "retained": false,
+      "topics" :[
+        "LoadTestBool"
+      ]
+    }
+```
+
 
 -----------
 ### Subscribe_data
@@ -358,18 +379,79 @@ ports    | Yes      | array of strings | The 'IN' ports to which subscription da
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an IN port variable defined in that program.
 
+#### Subscribe_data configuration example
+The following example shows how a valid configuration.
+
+**Note:** Make sure that the assigned GDS port exist and that the data type is correct. A wrong configruation will prevent the app from starting.
+
+   ```json
+"subscribe_data":[{
+      "topic" : "LoadTestBool",
+      "ports" :[
+        "Arp.Plc.Eclr/TestBench1.SubLoadTestBool"
+      ]
+    }
+```
 
 ### Configuration examples
+A complete configuration example can be found [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples).  
+Remember that your own configuration file must **always** be named `mqtt_gds.settings.json`.
 
-Examples of configuration files that you can use as a starting point for your own project are available [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples). Remember that your own configuration file must *always* be named `mqtt_gds.settings.json`.
-
-## Error handling 
-kommt noch
-
+-----------
 ## Known issues and limitations
 * Only one client, and one concurrent server connection, is currently supported
 * When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
 * Complex data types (including Arrays and Structures) are not currently supported.
+* Only QoS 0 is supported
+* The app checks the assigned GDS port in terms of availability and type during then start-up process. Any changes (delete, rename or type) during operation (download a modified project without stopping and rebooting the PLC) can lead to an undifiend behaviour!
+
+-----------
+## Error handling 
+The app logs the complete startup, connection and error history into the output.log file (`/opt/plcnext/logs/output.log`) of the PLC which gives the user a reliable indication of the current state of the app.
+In addition, a status port can be configured (please refer the chapter 'broker properties'). The value *true* indicates that the app was successfully started (configuration correct) and that connection to the configured MQTT Broker could be established. The values goes to *false* when the app could not be startet (wrong configuration) or when the connection to the MQTT Broker could not be established or is interrupted.
+
+**Note:** Phoenix Contact strongly recommend the usage of the "status_port".
+
+### Diagnostic Log
+This chapter explains the most important diagnostic messages and is intended to support troubleshooting the MQTT app.
+
+All diagnostics are printed in the output.log file (`/opt/plcnext/logs/output.log`).
+
+In the following is a positive stat up of the app logged and described.
+
+```
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Loaded configuration from file: /opt/plcnext/projects/MqttClient/mqtt_gds.settings.json  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Loaded configuration schema.  
+```
+The configuration was loaded successfully, no schema violations were detected.
+
+**Note:** Every schema violations (missing json seperators or missing mandatory fields) will lead to an error at this position.
+The message indicates the kind of the error.
+
+```
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - No reconnect port has been specified.  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Created MQTT Client with ID: 56022  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - No MQTT SSL/TLS Options provided. Defaults will be used.  
+PxceTcs.MqttClient.MqttClientManager  INFO  - Connecting to MQTT server  
+PxceTcs.MqttClient.MqttClientManager  INFO  - Connected  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Connected to MQTT Client 56022
+```
+After the configuration was loaded, generates the MQTT client a random client ID and tries to connect with the defined MQTT Broker.
+
+**Note:** Connection or certification problems will lead to an error at this position.
+
+```
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Subscribed to MQTT topic LoadTestBool  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Subscribed to MQTT topic LoadTestBool1  
+PxceTcs.Mqtt.GdsConnectorComponent    INFO  - SetupConfig(): Worker thread has been started. 
+```
+As sooon as the connection is valid will the MQTT Client start to publish and subscribe the configured topics.
+The cyclic update is performed with the worker thread (500ms), the app is running.
+
+
+## How to get support
+The MQTT Client app is supported in the forum of the [PLCnext Community](http://plcnext-community.net).
+Please raise an issue with a detailed error description and paste always the output.log file.
 
 -----------
 
