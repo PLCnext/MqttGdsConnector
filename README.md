@@ -50,11 +50,11 @@ The component is configured with the file `mqtt_gds.settings.json` which is stor
 }
 ```
 
-The entries in this file must conform to the defined JSON schema. Ff not will the app not start and post an error desciption in the output.log file which can be found in the following directory on the device.
+The entries in this file must conform to the defined JSON schema (please refer for more details the chapter "configuration"). 
 
-/opt/plcnext/logs/output.log
+**Note:** Every invalid configuration (invalid schema or missing mandatory fields) leads to a stop of the app. Debug information will be printed into the output.log file of the plc.
 
-The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target. 
+`/opt/plcnext/logs/output.log`
 
 
 ## Requirements
@@ -70,10 +70,12 @@ The MQTT GDS Connector uses the Remote Service Call (RSC) service published by t
 * Automatic reconnect to the MQTT Broker
 * Easy handling due to GDS port mapping, no further configuration effort
 * Cyclic update of Publish Topics, individually adjustable (minimum 500ms)
-* Support of the following data types (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String*, DateTime)
+* Support of the following data types* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String**, DateTime)
 
 
-**String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
+**The named data types are representing the C++ conventions, please refer the PLCnext Technology Handbook (available in the [PLCnext Community]((https://plcnext-community.net))) for the correct representetives in IEC 61131-3 or in Matlab<sup>&trade;</sup> Simulink.*  
+***String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
+
 
 
 ## Contributing
@@ -105,8 +107,10 @@ $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf215
 ```
 
 ## Installing manualy
-**Note** The follwoing steps are only needed when you build the application by yourself without using the PLCnext Store. Phoenix Contact recommend the usage of the PLCnext Store.
+**Note:** The follwoing steps are only needed when you build the application by yourself without using the PLCnext Store. Phoenix Contact recommend the usage of the PLCnext Store.
 
+**Note:** The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target.
+When the MQTT Client app is deployed via the PLCnext Store are the needed RSC services automaticaly deployed and loaded. 
 
 1. Copy the contents of `external/deploy/axcf2152` to `/usr/local` on the target.
 1. Copy `libGdsConnector.so` to `/usr/local/lib` on the target.
@@ -120,7 +124,6 @@ $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf215
 This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* (both MQTT Clients) via a public MQTT broker, over an unencrypted connection. It requires a PLC that is connected to the internet, and a PC with access to both the PLC and the internet. For this example, the PC must have PLCnext Engineer software installed.
 
 **There are many other free MQTT Test Clients for Android, Windows or Linux available*
-
 
 1. Make sure that your AXC F 2152 has a firmware >=2019.3 and that it has an internet connection
 1. Register yourself and your AXC F 2152 in the PLCnext Store (www.plcnextstore.com) - not necessary when the app is installed manualy
@@ -191,36 +194,38 @@ This directory must be created on the PLC if it does not exist already.
 
 For encrypted connections, a server certificate, client certificate and client private key may be required. These files should be copied to the PLC using WinSCP (Windows) or scp (Linux). The user is free to place these files anywhere on the PLC file system. The absolute path to these files must then be specified in the relevant `ssl_options` configuration fields.
 
-After modifying any of these files, the PLCnext Runtime must be restarted.
+All changes to the configuration are only effective after a restart of the PLC.
 
 
-### Configuration file details
+### Configuration scheme
 
 The configuration file `mqtt_gds.settings.json` must comply with the JSON schema defined in the file `mqtt_gds.schema.json`. This schema file must be located in the following directory on the PLC:
 
 `/opt/plcnext/apps/60002172000048/`
 
-A valid configuration consists of an array of broker objects. Each broker object represents one MQTT client-broker connection.
+**Note:** Every invalid configuration (invalid schema or missing mandatory fields) leads to a stop of the app. Debug information will be printed into the output.log file of the plc.
 
-The following is a list of all available broker properties. Optional properties that do not appear in the configuration file will be given default values.
+`/opt/plcnext/logs/output.log`
 
-NOTE: If the application encounters any error during startup, then it will immediately stop. For example, any error in the configuration, including missing GDS ports or GDS ports with unsupported types, will halt the application. In this case, check the Ouput.log file for a description of the error. After the error is corrected, the PLC must be restarted.
+
 
 -----------
-#### broker properties
+### broker properties
+A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
+
+**Note:** The MQTT Client version 1.1 does only support one MQTT Broker connection.
+
 
 Name            | Required | JSON type        | Description
 :---            | :---     | :---             | :---
 host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
 clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
-timeout         | No       | integer          | Client timeout value in milliseconds (default: 300000, i.e. 300 seconds).
 status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.<sup>2</sup>
-reconnect_port  | No       | string           | The name of a boolean GDS port that, on a rising edge, will trigger a reconnect attempt.<sup>2</sup>
 connect_options | Yes      | object           | The connection options. See table below.
 publish_data    | No       | array of objects | MQTT publish information. See table below.
 subscribe_data  | No       | array of objects | MQTT subscribe information. See table below.
 
-Notes:
+**Note:**
 1. The host _must_ be specified in the following format:
 
    *protocol://host:port*
@@ -238,20 +243,13 @@ Notes:
 
 Name                | Required | JSON type | Default value | Description
 :---                | :---     | :---      | :---          | :---
-keep_alive_interval | No       | integer   | 60            | The keep alive interval in seconds.
-connect_timeout     | No       | integer   | 30            | The connect timeout in seconds.
 username            | No       | string    | NULL          | The user name to use for the connection.
 password            | No       | string    | NULL          | The password to use for the connection.
-max_inflight        | No       | integer   | 0             | The maximum number of messages that can be in-flight simultaneously.
-is_clean_session    | No       | boolean   | true          | Whether the server should remember state for the client across reconnects.
 mqtt_version        | No       | integer   | 0             | The version of MQTT to be used on the connect.<sup>1</sup>
-automatic_reconnect | No       | boolean   | false         | Enable or disable automatic reconnects.
-min_retry_interval  | No       | integer   | 0             | The minimum retry interval in seconds. Doubled on each failed retry.
-max_retry_interval  | No       | integer   | 0             | The maximum retry interval in seconds. The doubling stops here on failed retries.
 will_options        | Yes      | object    |               | The LWT options to use for the connection. See table below.
 ssl_options         | No       | object    |               | The SSL options to use for the connection. See table below. 
 
-Note:
+**Note:**
 1. mqtt_version:
    - 0 = default: start with 3.1.1, and if that fails, fall back to 3.1
    - 3 = only try version 3.1
@@ -263,26 +261,70 @@ Note:
 Name     | Required | JSON type | Description
 :---     | :---     | :---      | :---
 topic    | Yes      | string    | The LWT message is published to the this topic.
-payload  | No       | string    | The message that is published to the Will Topic.
+payload  | Yes       | string    | The message that is published to the Will Topic.
 qos      | No       | integer   | The message Quality of Service.
 retained | No       | boolean   | Tell the broker to keep the LWT message after send to subscribers.
 
 -----------
 #### ssl_options
+The ssl option is only needed when an encrypted *ssl* communication should be used. Depending on the MQTT Broker policies might different configuration needed.
 
 Name                    | Required | JSON type | Description
 :---                    | :---     | :---      | :---
-trust_store             | No       | string    | The filename containing the public digital certificates trusted by the client.
+trust_store             | Yes       | string    | The filename containing the public digital certificates trusted by the client.
 key_store               | No       | string    | The filename containing the public certificate chain of the client.
 private_key             | No       | string    | The filename containing the client's private key.
 private_key_password    | No       | string    | The password to load the client's privateKey (if encrypted).
 enabled_cipher_suites   | No       | string    | The list of cipher suites that the client will present to the server during the SSL handshake.
 enable_server_cert_auth | No       | boolean   | Enable verification of the server certificate.
 
------------
-#### publish_data
+#### Broker configuration example
+The following examples show two broker configurations. One is a simple unencrypted connection to the mosquitto MQTT test broker and the other is an encrypted connection.
 
-publish_data must be an array of objects with the following properties:
+   ```json
+{ "brokers":[{
+    "host": "tcp://test.mosquitto.org:1883",
+    "client_name": "MQTT_Test_App",
+	"status_port": "Arp.Plc.Eclr/TestBench1.MQTT_Broker_Status",
+    "connect_options":{
+      "will_options":{
+        "topic": "last_will_topic",
+        "payload": "auf wiedersehen"
+      }
+  }]
+}
+```
+*Configuration example for an unencrypted configuration*
+
+   ```json
+{ "brokers":[{
+    "host": "ssl://test.mosquitto.org:8883",
+    "client_name": "MQTT_Test_App",
+	"status_port": "Arp.Plc.Eclr/TestBench1.MQTT_Broker_Status",
+    "connect_options":{
+      "will_options":{
+        "topic": "last_will_topic",
+        "payload": "auf wiedersehen"
+      },
+	"ssl_options":
+    {
+            "trust_store": "/opt/plcnext/projects/MqttClient/mosquitto.org.crt",
+            "key_store": "/opt/plcnext/projects/MqttClient/client.crt",
+            "private_key": "/opt/plcnext/projects/MqttClient/client.key",
+            "private_key_password": "dont_tell",
+            "enabled_cipher_suites": "",
+            "enable_server_cert_auth": true
+
+       }
+    }
+  }]
+}
+*Configuration example for an encrypted configuration*```
+
+-----------
+### Publish_data
+
+Publish_data must be an array of objects with the following properties:
 
 Name     | Required | JSON type        | Description
 :---     | :---     | :---             | :---
@@ -292,7 +334,7 @@ qos      | Yes      | integer          | The message Quality of Service.
 retained | Yes      | boolean          | Tell the broker to keep messages after send to subscribers.
 topics   | Yes      | array of strings | Message are published to all these topics.
 
-Note:
+**Note:**
 1. Ports published from PLCnext Engineer projects must be specified in the following format:
 
    *Arp.Plc.Eclr/ProgramInstance.PortName*
@@ -300,7 +342,7 @@ Note:
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
 
 -----------
-#### subscribe_data
+### Subscribe_data
 
 subscribe_data must be an array of objects with the following properties:
 
@@ -309,7 +351,7 @@ Name     | Required | JSON type        | Description
 topic    | Yes      | string           | This topic is subscribed Message are published to all these topics.
 ports    | Yes      | array of strings | The 'IN' ports to which subscription data will be written<sup>1</sup>.
 
-Note:
+**Note:**
 1. Ports in PLCnext Engineer projects that subscribe to MQTT topics must be specified in the following format:
 
    *Arp.Plc.Eclr/ProgramInstance.PortName*
