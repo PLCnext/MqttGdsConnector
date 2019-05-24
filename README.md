@@ -6,18 +6,18 @@
 [![Web](https://img.shields.io/badge/PLCnext-Website-blue.svg)](https://www.phoenixcontact.com/plcnext)
 [![Community](https://img.shields.io/badge/PLCnext-Community-blue.svg)](https://www.plcnext-community.net)
 
-| Date       | Version | Author       |
-|------------|---------|--------------|
-| 02.05.2019 | 1.1.0   | Martin Boers |
+| Date       | Version | Authors                     |
+|------------|---------|-----------------------------|
+| 24.05.2019 | 1.1.1   | Martin Boers<br>Frank Walde |
 
 
 ## Description
 
-MQTT GDS Connector is a PLCnext Technology component, that exchanges data between Global Data Space (GDS) ports and MQTT server topics. 
+MQTT GDS Connector is a PLCnext Technology component that exchanges data between Global Data Space (GDS) ports and MQTT server topics.
 
 ![PLCnext Engineer Port Example](images/PLCnEng_Port_Example.jpg)
 
-The component is configured with the file `mqtt_gds.settings.json` which is stored localy on the device. 
+The component is configured with the file `mqtt_gds.settings.json` which is stored locally on the device.
 
 ```json
 { "brokers":[{
@@ -50,9 +50,9 @@ The component is configured with the file `mqtt_gds.settings.json` which is stor
 }
 ```
 
-The entries in this file must conform to the defined JSON schema (please refer for more details the chapter "configuration"). 
+The entries in this file must conform to the defined JSON schema (please refer for more details the chapter "configuration").
 
-**Note:** Every invalid configuration (invalid schema or missing mandatory fields) leads to a stop of the app. Debug information will be printed into the output.log file of the plc.
+**Note:** Every invalid configuration (invalid schema or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC.
 
 `/opt/plcnext/logs/output.log`
 
@@ -65,7 +65,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 
 ## Features
 
-* The MQTT Client app is compatible with version 3.1 and 3.1.1
+* The MQTT Client app is compatible with MQTT version 3.1 and 3.1.1
 * Support of TCP and Websockets over an unencrypted or an encrypted (SSL/TLS) connection
 * Automatic reconnect to the MQTT Broker
 * Easy handling due to GDS port mapping, no further configuration effort
@@ -73,7 +73,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 * Support of the following data types* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String**, DateTime)
 
 
-**The named data types are representing the C++ conventions, please refer the PLCnext Technology Handbook (available in the [PLCnext Community]((https://plcnext-community.net))) for the correct representetives in IEC 61131-3 or in Matlab<sup>&trade;</sup> Simulink.*  
+**The named data types are representing the C++ conventions, please refer the PLCnext Technology Handbook (available in the [PLCnext Community]((https://plcnext-community.net))) for the corresponding representation in IEC 61131-3 or in Matlab<sup>&trade;</sup> Simulink.*  
 ***String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
 
 
@@ -106,11 +106,11 @@ $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf215
 $ cmake --build /home/tcs-user/Documents/projects/MqttGdsConnector/build/axcf2152-2019.3 --config Debug --target install -- -j 3
 ```
 
-## Installing manualy
-**Note:** The follwoing steps are only needed when you build the application by yourself without using the PLCnext Store. Phoenix Contact recommend the usage of the PLCnext Store.
+## Installing manually
+**Note:** The following steps are only needed when you build the application from source without using the PLCnext Store. Phoenix Contact recommend the usage of the PLCnext Store.
 
 **Note:** The MQTT GDS Connector uses the Remote Service Call (RSC) service published by the MQTT Client component, which must be running on the target.
-When the MQTT Client app is deployed via the PLCnext Store are the needed RSC services automaticaly deployed and loaded. 
+When the MQTT Client app is deployed via the PLCnext Store, this RSC service is automatically deployed and loaded.
 
 1. Copy the contents of `external/deploy/axcf2152` to `/usr/local` on the target.
 1. Copy `libGdsConnector.so` to `/usr/local/lib` on the target.
@@ -126,8 +126,8 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
 **There are many other free MQTT Test Clients for Android, Windows or Linux available*
 
 1. Make sure that your AXC F 2152 has a firmware >=2019.3 and that it has an internet connection
-1. Register yourself and your AXC F 2152 in the PLCnext Store (www.plcnextstore.com) - not necessary when the app is installed manualy
-1. Deploy the app via the PLCnext Store (recommend) or manualy
+1. Register yourself and your AXC F 2152 in the PLCnext Store (www.plcnextstore.com) - not necessary when the app is installed manually
+1. Deploy the app via the PLCnext Store (recommend) or manually
 1. Create an IEC 61131 project in PLCnext Engineer version 2019.3, with the following configuration:
    - One AXC F 2152 PLC with firmware version >=2019.0
    - one program called "Main"
@@ -194,18 +194,18 @@ This directory must be created on the PLC if it does not exist already.
 
 For encrypted connections, a server certificate, client certificate and client private key may be required. These files should be copied to the PLC using WinSCP (Windows) or scp (Linux). The user is free to place these files anywhere on the PLC file system. The absolute path to these files must then be specified in the relevant `ssl_options` configuration fields.
 
-All changes to the configuration are only effective after a restart of the PLC.
+All changes to the configuration will only take effect after a restart of the PLC.
 
 
-### Configuration scheme
+### Configuration schema
 
 The configuration file `mqtt_gds.settings.json` must comply with the JSON schema defined in the file `mqtt_gds.schema.json`. This schema file must be located in the following directory on the PLC:
 
 `/opt/plcnext/apps/60002172000048/`
 
-**Note:** Every invalid configuration (invalid schema or missing mandatory fields) leads to a stop of the app. Debug information will be printed into the output.log file of the plc.
+**Note:** Every invalid configuration (invalid configuration or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC.
 
-`/opt/plcnext/logs/output.log`
+`/opt/plcnext/logs/Output.log`
 
 
 
@@ -213,7 +213,7 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 ### Broker properties
 A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
 
-**Note:** The MQTT Client version 1.1 does only support one MQTT Broker connection.
+**Note:** The MQTT Client version 1.1 only supports one MQTT Broker connection.
 
 
 Name            | Required | JSON type        | Description
@@ -239,7 +239,7 @@ subscribe_data  | No       | array of objects | MQTT subscribe information. See 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of a port variable defined in that program.
 
 -----------
-#### Connect_options
+#### connect_options
 
 Name                | Required | JSON type | Default value | Description
 :---                | :---     | :---      | :---          | :---
@@ -256,7 +256,7 @@ ssl_options         | No       | object    |               | The SSL options to 
    - 4 = only try version 3.1.1
 
 -----------
-#### Will_options
+#### will_options
 
 Name     | Required | JSON type | Description
 :---     | :---     | :---      | :---
@@ -266,8 +266,8 @@ qos      | No       | integer   | The message Quality of Service.
 retained | No       | boolean   | Tell the broker to keep the LWT message after send to subscribers.
 
 -----------
-#### Ssl_options
-The ssl option is only needed when an encrypted *ssl* communication should be used. Depending on the MQTT Broker policies might different configuration needed.
+#### ssl_options
+The ssl option is only needed when encrypted *ssl* communication is used. Depending on the MQTT Broker policies, different configurations may be needed.
 
 Name                    | Required | JSON type | Description
 :---                    | :---     | :---      | :---
@@ -279,7 +279,7 @@ enabled_cipher_suites   | No       | string    | The list of cipher suites that 
 enable_server_cert_auth | No       | boolean   | Enable verification of the server certificate.
 
 #### Broker configuration example
-The following examples show two broker configurations. One is a simple unencrypted connection to the mosquitto MQTT test broker and the other is an encrypted connection.
+The following examples show two broker configurations. One is a simple unencrypted connection to the Mosquitto MQTT test broker and the other is an encrypted connection.
 
    ```json
 { "brokers":[{
@@ -294,7 +294,7 @@ The following examples show two broker configurations. One is a simple unencrypt
   }]
 }
 ```
-*Configuration example for an unencrypted configuration*
+*Configuration example for an unencrypted connection*
 
    ```json
 { "brokers":[{
@@ -320,10 +320,10 @@ The following examples show two broker configurations. One is a simple unencrypt
   }]
 }
 ```
-*Configuration example for an encrypted configuration*```
+*Configuration example for an encrypted connection*```
 
 -----------
-### Publish_data
+### publish_data
 
 Publish_data must be an array of objects with the following properties:
 
@@ -345,10 +345,10 @@ topics   | Yes      | array of strings | Message are published to all these topi
 1. The MQTT app version 1.1 does not support 'retained'.
 
 
-#### Publish_data configuration example
-The following example shows how a valid configuration.
+#### publish_data configuration example
+The following example shows a valid configuration.
 
-**Note:** Make sure that the assigned GDS port exist and that the data type is correct. A wrong configruation will prevent the app from starting.
+**Note:** Make sure that the assigned GDS port exists and that the data type is correct. An incorrect configuration will prevent the app from starting.
 
    ```json
     "publish_data":[{
@@ -363,7 +363,7 @@ The following example shows how a valid configuration.
 
 
 -----------
-### Subscribe_data
+### subscribe_data
 
 subscribe_data must be an array of objects with the following properties:
 
@@ -379,10 +379,10 @@ ports    | Yes      | array of strings | The 'IN' ports to which subscription da
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an IN port variable defined in that program.
 
-#### Subscribe_data configuration example
-The following example shows how a valid configuration.
+#### subscribe_data configuration example
+The following example shows a valid configuration.
 
-**Note:** Make sure that the assigned GDS port exist and that the data type is correct. A wrong configruation will prevent the app from starting.
+**Note:** Make sure that the assigned GDS port exists and that the data type is correct. An incorrect configruation will prevent the app from starting.
 
    ```json
 "subscribe_data":[{
@@ -403,21 +403,21 @@ Remember that your own configuration file must **always** be named `mqtt_gds.set
 * When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
 * Complex data types (including Arrays and Structures) are not currently supported.
 * Only QoS 0 is supported
-* The app checks the assigned GDS port in terms of availability and type during then start-up process. Any changes (delete, rename or type) during operation (download a modified project without stopping and rebooting the PLC) can lead to an undifiend behaviour!
+* The app checks the assigned GDS port in terms of availability and type during the start-up process. Any changes to GDS ports (delete, rename or type) during operation (e.g. if a modified PLCnext Engineer project is downloaded without stopping the PLC) can lead to an undefined behaviour!
 
 -----------
 ## Error handling 
-The app logs the complete startup, connection and error history into the output.log file (`/opt/plcnext/logs/output.log`) of the PLC which gives the user a reliable indication of the current state of the app.
-In addition, a status port can be configured (please refer the chapter 'broker properties'). The value *true* indicates that the app was successfully started (configuration correct) and that connection to the configured MQTT Broker could be established. The values goes to *false* when the app could not be startet (wrong configuration) or when the connection to the MQTT Broker could not be established or is interrupted.
+The app logs the complete startup, connection and error history into the Output.log file (`/opt/plcnext/logs/Output.log`) of the PLC which gives the user a reliable indication of the current state of the app.
+In addition, a status port can be configured (please refer the chapter 'broker properties'). The value *true* indicates that the app was successfully started (configuration correct) and that connection to the configured MQTT Broker could be established. The values goes to *false* when the app could not be started (wrong configuration) or when the connection to the MQTT Broker could not be established or is interrupted.
 
 **Note:** Phoenix Contact strongly recommend the usage of the "status_port".
 
 ### Diagnostic Log
 This chapter explains the most important diagnostic messages and is intended to support troubleshooting the MQTT app.
 
-All diagnostics are printed in the output.log file (`/opt/plcnext/logs/output.log`).
+All diagnostics are printed in the output.log file (`/opt/plcnext/logs/Output.log`).
 
-In the following is a positive stat up of the app logged and described.
+In the following is a positive start up of the app logged and described.
 
 ```
 PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Loaded configuration from file: /opt/plcnext/projects/MqttClient/mqtt_gds.settings.json  
@@ -425,7 +425,7 @@ PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Loaded configuration schema.
 ```
 The configuration was loaded successfully, no schema violations were detected.
 
-**Note:** Every schema violations (missing json seperators or missing mandatory fields) will lead to an error at this position.
+**Note:** Every schema violation (missing json separators or missing mandatory fields) will lead to an error at this position.
 The message indicates the kind of the error.
 
 ```
@@ -445,13 +445,13 @@ PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Subscribed to MQTT topic LoadTestB
 PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Subscribed to MQTT topic LoadTestBool1  
 PxceTcs.Mqtt.GdsConnectorComponent    INFO  - SetupConfig(): Worker thread has been started. 
 ```
-As sooon as the connection is valid will the MQTT Client start to publish and subscribe the configured topics.
-The cyclic update is performed with the worker thread (500ms), the app is running.
+As soon as the connection is valid, the MQTT Client will start to publish and subscribe the configured topics.
+The cyclic update is performed with a worker thread (500ms). The app is now running.
 
 
 ## How to get support
 The MQTT Client app is supported in the forum of the [PLCnext Community](http://plcnext-community.net).
-Please raise an issue with a detailed error description and paste always the output.log file.
+Please raise an issue with a detailed error description and paste always the Output.log file.
 
 -----------
 

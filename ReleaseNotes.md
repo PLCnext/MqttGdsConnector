@@ -4,6 +4,25 @@
 
 | Date       | Version     |
 |------------|-------------|
+| 25.05.2019 | 1.1.1       |
+
+### New Features
+
+- None.
+
+### Changes
+
+### BugFixes
+
+- App no longer crashes after reconnecting to broker.
+- Publishing now occurs at the correct frequency.
+
+----------
+
+## Previous versions
+
+| Date       | Version     |
+|------------|-------------|
 | 02.05.2019 | 1.1.0       |
 
 ### New Features
@@ -18,8 +37,6 @@
 ### BugFixes
 
 ----------
-
-## Previous versions
 
 | Date       | Version     |
 |------------|-------------|
