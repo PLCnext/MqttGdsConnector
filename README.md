@@ -50,11 +50,9 @@ The component is configured with the file `mqtt_gds.settings.json` which is stor
 }
 ```
 
-The entries in this file must conform to the defined JSON schema (please refer for more details the chapter "configuration").
+The entries in this file must conform to the defined JSON schema (please refer for more details the "configuration reference" section below).
 
-**Note:** Every invalid configuration (invalid schema or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC.
-
-`/opt/plcnext/logs/output.log`
+**Note:** Every invalid configuration (invalid schema or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC: `/opt/plcnext/logs/Output.log`
 
 
 ## Requirements
@@ -70,12 +68,10 @@ The entries in this file must conform to the defined JSON schema (please refer f
 * Automatic reconnect to the MQTT Broker
 * Easy handling due to GDS port mapping, no further configuration effort
 * Cyclic update of Publish Topics, individually adjustable (minimum 500ms)
-* Support of the following data types* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String**, DateTime)
+* Support of the following data types\* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String\*\*, DateTime)
 
-
-**The named data types are representing the C++ conventions, please refer the PLCnext Technology Handbook (available in the [PLCnext Community]((https://plcnext-community.net))) for the corresponding representation in IEC 61131-3 or in Matlab<sup>&trade;</sup> Simulink.*  
-***String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
-
+*\*The named data types are C++ types. Please refer the PLCnext Technology Handbook (available in the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_wrapper&view=wrapper&Itemid=353&lang=en)) for the corresponding IEC 61131-3 or Matlab<sup>&trade;</sup> Simulink data types.*  
+**\*String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
 
 
 ## Contributing
@@ -123,17 +119,17 @@ When the MQTT Client app is deployed via the PLCnext Store, this RSC service is 
 
 This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* (both MQTT Clients) via a public MQTT broker, over an unencrypted connection. It requires a PLC that is connected to the internet, and a PC with access to both the PLC and the internet. For this example, the PC must have PLCnext Engineer software installed.
 
-**There are many other free MQTT Test Clients for Android, Windows or Linux available*
+**This is only an example. There are many other free MQTT Test Clients for Android, Windows or Linux available*
 
-1. Make sure that your AXC F 2152 has a firmware >=2019.3 and that it has an internet connection
-1. Register yourself and your AXC F 2152 in the PLCnext Store (www.plcnextstore.com) - not necessary when the app is installed manually
-1. Deploy the app via the PLCnext Store (recommend) or manually
-1. Create an IEC 61131 project in PLCnext Engineer version 2019.3, with the following configuration:
-   - One AXC F 2152 PLC with firmware version >=2019.0
-   - one program called "Main"
-   - one program OUT port called "PubMessage" of type STRING
-   - one program IN port called "SubMessage" of type STRING
-   - one instance of the Main program, called "MainInstance"
+1. Make sure that your AXC F 2152 runs on [firmware](https://www.phoenixcontact.com/qr/2404267/firmware) version >=2019.3, and that it has access to the Internet.
+1. Register for a user account and authorize your AXC F 2152 in the [PLCnext Store](https://www.plcnextstore.com).
+1. Deploy the app via the PLCnext Store.
+1. Create an IEC 61131 project in PLCnext Engineer with the following configuration:
+  - one AXC F 2152 PLC with the template version >=2019.0 LTS
+  - one program called "Main"
+  - one program OUT port called "PubMessage" of STRING type
+  - one program IN port called "SubMessage" of STRING type
+  - one instance of the Main program, called "MainInstance"
 1. Download the PLCnext Engineer project to the PLC.
 1. Go online to the PLC and change the value of the "PubMessage" variable in the "MainInstance" program instance.
 1. Install the [MQTTool app](https://itunes.apple.com/us/app/mqttool/id1085976398) on an iPhone or iPad.
@@ -203,9 +199,7 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 
 `/opt/plcnext/apps/60002172000048/`
 
-**Note:** Every invalid configuration (invalid configuration or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC.
-
-`/opt/plcnext/logs/Output.log`
+**Note:** Every invalid configuration (invalid configuration or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC: `/opt/plcnext/logs/Output.log`
 
 
 
@@ -254,7 +248,7 @@ ssl_options         | No       | object    |               | The SSL options to 
    - 0 = default: start with 3.1.1, and if that fails, fall back to 3.1
    - 3 = only try version 3.1
    - 4 = only try version 3.1.1
-
+1. LWT = Last Will Topic
 -----------
 #### will_options
 
@@ -263,7 +257,7 @@ Name     | Required | JSON type | Description
 topic    | Yes      | string    | The LWT message is published to the this topic.
 payload  | Yes       | string    | The message that is published to the Will Topic.
 qos      | No       | integer   | The message Quality of Service.
-retained | No       | boolean   | Tell the broker to keep the LWT message after send to subscribers.
+retained | No       | boolean   | Tell the broker to keep the LWT message after sent to subscribers.
 
 -----------
 #### ssl_options
@@ -341,7 +335,7 @@ topics   | Yes      | array of strings | Message are published to all these topi
    *Arp.Plc.Eclr/ProgramInstance.PortName*
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
-1. The MQTT app version 1.1 does only support QoS 0
+1. The MQTT app version 1.1 only supports QoS 0
 1. The MQTT app version 1.1 does not support 'retained'.
 
 
@@ -426,7 +420,7 @@ PxceTcs.Mqtt.GdsConnectorComponent    INFO  - Loaded configuration schema.
 The configuration was loaded successfully, no schema violations were detected.
 
 **Note:** Every schema violation (missing json separators or missing mandatory fields) will lead to an error at this position.
-The message indicates the kind of the error.
+The message indicates the error type.
 
 ```
 PxceTcs.Mqtt.GdsConnectorComponent    INFO  - No reconnect port has been specified.  
@@ -450,8 +444,8 @@ The cyclic update is performed with a worker thread (500ms). The app is now runn
 
 
 ## How to get support
-The MQTT Client app is supported in the forum of the [PLCnext Community](http://plcnext-community.net).
-Please raise an issue with a detailed error description and paste always the Output.log file.
+The MQTT Client app is supported in the forum of the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_easydiscuss&view=categories&Itemid=221&lang=en).
+Please raise an issue with a detailed error description and always provide a copy of the Output.log file.
 
 -----------
 
