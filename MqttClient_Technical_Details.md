@@ -210,6 +210,7 @@ ssl_options         | No       | object    |               | The SSL options to 
 1. LWT = Last Will Topic
 -----------
 <div class="page"></div>
+
 #### will_options
 
 Name     | Required | JSON type | Description
