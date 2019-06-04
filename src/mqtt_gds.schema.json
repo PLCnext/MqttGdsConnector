@@ -18,6 +18,19 @@
             "minLength": 1,
             "maxLength": 512
           },
+          "timeout": {
+            "type": "integer"
+          },
+          "status_port": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "reconnect_port": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
           "connect_options": {
             "type": "object",
             "properties": {
@@ -123,6 +136,11 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 512
+                },
+                "period": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
                 },
                 "qos": {
                   "type": "integer"

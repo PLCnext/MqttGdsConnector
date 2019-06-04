@@ -17,13 +17,16 @@
 #include "Arp/Plc/Gds/Services/IDataAccessService.hpp"
 
 #include "IMqttClientService.hpp"
+#include <string.h>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
-#define APP_ID "60002172000048"                            // The unique ID for this app in the PLCnext Store
-#define SCHEMA_FILE_PATH "/opt/plcnext/apps/" APP_ID  // Prepend the path to installed apps
-#define SCHEMA_FILE_NAME "mqtt_gds.schema.json"            // ... and hard-code the schema file name
-#define SCHEMA_FILE SCHEMA_FILE_PATH "/" SCHEMA_FILE_NAME
+#define MQTT_SCHEMA_FILE "/opt/plcnext/apps/60002172000048/mqtt_gds.schema.json"
+#define AWS_SCHEMA_FILE "/opt/plcnext/apps/60002172000053/mqtt_gds.schema.json"
+
+#define CYCLE_TIME_MS 500
+#define CYCLES_PER_SECOND 2
+#define MAX_CYCLES 1209600 // 86400 sec/day * 2 cycles/sec * 7 days, i.e. 1 week at 500 ms cycle
 
 namespace PxceTcs { namespace Mqtt
 {
@@ -55,6 +58,8 @@ private: // methods
     GdsConnectorComponent(const GdsConnectorComponent& arg) = delete;
     GdsConnectorComponent& operator= (const GdsConnectorComponent& arg) = delete;
 
+    bool Subscribe();
+
 public: // static factory operations
     static IComponent::Ptr Create(Arp::System::Acf::IApplication& application, const String& name);
 
@@ -69,28 +74,37 @@ private: // fields
 
     json config;
 
+    // Flag that reflects the current status
+    boolean allSystemsGo = true;
+
+    boolean automaticReconnect = false;
+    int32 retryInterval = 0;
+    int32 secsToReconnect;
+
+    // Output port indicating the connection status
+    boolean IsConnected = false;
+
+    // Input port that forces a reconnect attempt
+    boolean Reconnect = false;
+    // ... and this for edge detection
+    boolean ReconnectMemory;
+
+    // Flag that indicates the Update method is blocked
+    boolean IsBlocked = false;
+
+    // Cycle counter
+    // Used to publish data periodically
+    int32 cycles = 0;
+
 private:
 	void Update();  // Operation that is executed on each thread loop
-
-public: /* Ports
-           =====
-           Component ports are defined in the following way:
-           //#port
-           //#name(NameOfPort)
-           boolean portField;
-
-           The name comment defines the name of the port and is optional. Default is the name of the field.
-           Attributes which are defined for a component port are IGNORED. If component ports with attributes
-           are necessary, define a single structure port where attributes can be defined foreach field of the
-           structure.
-        */
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // inline methods of class GdsConnectorComponent
 inline GdsConnectorComponent::GdsConnectorComponent(IApplication& application, const String& name)
 : ComponentBase(application, ::PxceTcs::Mqtt::GdsConnectorLibrary::GetInstance(), name, ComponentCategory::Custom)
-, updateThread(this, &PxceTcs::Mqtt::GdsConnectorComponent::GdsConnectorComponent::Update, Milliseconds{500}.count(), "CyclicUpdate")
+, updateThread(this, &PxceTcs::Mqtt::GdsConnectorComponent::GdsConnectorComponent::Update, Milliseconds{CYCLE_TIME_MS}.count(), "CyclicUpdate")
 {
 }
 

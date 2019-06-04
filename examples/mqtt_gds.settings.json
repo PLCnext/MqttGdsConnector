@@ -4,6 +4,9 @@
     {
       "host": "ssl://test.mosquitto.org:8883",
       "client_name": "PxcTest",
+      "timeout": 60,
+      "status_port": "Arp.Plc.Eclr/MainInstance.MqttConnected",
+      "reconnect_port": "Arp.Plc.Eclr/MainInstance.MqttReconnect",
       "connect_options":
       {
           "keep_alive_interval": 30,
@@ -20,27 +23,14 @@
           },
           "ssl_options":
           {
-<<<<<<< HEAD
             "trust_store": "/opt/plcnext/projects/MqttClient/mosquitto.org.crt",
             "key_store": "/opt/plcnext/projects/MqttClient/client.crt",
             "private_key": "/opt/plcnext/projects/MqttClient/client.key",
             "private_key_password": "dont_tell",
-=======
-            "trust_store": "/usr/local/lib/mosquitto.org.crt",
-            "key_store": "/usr/local/lib/client.crt",
-            "private_key": "/usr/local/lib/client.key",
-            "private_key_password": "FastJ3denTag",
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
             "enabled_cipher_suites": "",
             "enable_server_cert_auth": true
           },
           "is_clean_session": true,
-<<<<<<< HEAD
-=======
-          "servers":
-          [
-          ],
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
           "mqtt_version": 0,
           "automatic_reconnect": false,
           "min_retry_interval": 0,
@@ -54,39 +44,29 @@
           "retained": false,
           "topics"    :
           [
-<<<<<<< HEAD
             "pxc_monitor",
-=======
-            "pxc_hello",
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
             "pxc_REAL"
           ]
         },
         {
           "port"      : "Arp.Plc.Eclr/MainInstance.PubString",
+          "period": 1,
           "qos": 0,
           "retained": false,
           "topics" :
           [
-<<<<<<< HEAD
             "pxc_monitor",
-=======
-            "pxc_hello",
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
             "pxc_STRING"
           ]
         },
         {
           "port"   : "Arp.Plc.Eclr/MainInstance.PubInt",
+          "period": 2,
           "qos": 0,
           "retained": false,
           "topics" :
           [
-<<<<<<< HEAD
             "pxc_monitor",
-=======
-            "pxc_hello",
->>>>>>> bfb9a5c... added gitattributes to avoid messing up LF
             "pxc_INT"
           ]
         }
