@@ -9,7 +9,7 @@ n) TARGETNAME=${OPTARG};;
 esac
 done
 
-VERSION=$(echo $ARPVERSION | grep -oP [0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)
+VERSION=$(echo $ARPVERSION | grep -oPe  [0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)
 echo "Version:${VERSION}"
 
 # Get the directory of this script
