@@ -1,7 +1,7 @@
 # PLCnext Technology - MQTT GDS Connector
 
-[![Feature Requests](https://img.shields.io/github/issues/PLCnext/mqtt_gds_connector/feature-request.svg)](https://github.com/PLCnext/mqtt_gds_connector/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-[![Bugs](https://img.shields.io/github/issues/PLCnext/mqtt_gds_connector/bug.svg)](https://github.com/PLCnext/mqtt_gds_connector/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/PLCnext/MqttGdsConnector/feature-request.svg)](https://github.com/PLCnext/MqttGdsConnector/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
+[![Bugs](https://img.shields.io/github/issues/PLCnext/MqttGdsConnector/bug.svg)](https://github.com/PLCnext/MqttGdsConnector/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Web](https://img.shields.io/badge/PLCnext-Website-blue.svg)](https://www.phoenixcontact.com/plcnext)
 [![Community](https://img.shields.io/badge/PLCnext-Community-blue.svg)](https://www.plcnext-community.net)
