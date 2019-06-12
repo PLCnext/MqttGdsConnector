@@ -50,5 +50,10 @@ do
 echo -e "T: ${Toolchains[$i]} \n V:${ARPVERSION[$i]} \n HW:${Hardware[$i]} \n "
 echo "Build MqttClient"
 $DIR/build-all.sh  -t "${Toolchains[$i]}" -a "${ARPVERSION[$i]}" -n "${Hardware[$i]}"
-
+## Example Output:
+#//T: /home/sdks/axcf2152/2019.3 
+#// V:2019.3 (19.3.0.18509  ) 
+#// HW:AXCF2152 
+#//
+#//Build MqttClient
 done
