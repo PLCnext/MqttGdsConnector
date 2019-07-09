@@ -15,7 +15,7 @@
 
 MQTT GDS Connector is a PLCnext Technology component that exchanges data between Global Data Space (GDS) ports and MQTT server topics.
 
-![PLCnext Engineer Port Example](images/PLCnEng_Port_Example.jpg)
+![PLCnext Engineer Port Example](images/PLCnEng_MQTT_Port_Example.png)
 
 The component is configured with the file `mqtt_gds.settings.json` which is stored locally on the device.
 
