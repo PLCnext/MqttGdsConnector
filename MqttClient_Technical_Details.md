@@ -2,7 +2,7 @@
 
 | Date       | Version |
 |:---------- | -------:|
-| 25.05.2019 | 1.1.1   |
+| 19.11.2019 | 2.0.0   |
 
 
 ## IMPORTANT NOTE
@@ -29,6 +29,8 @@ The component is configured with the file `mqtt_gds.settings.json` which is stor
         "payload": "auf wiedersehen"
       }
     },
+    "publish_on_change": true,
+    "cycle_count_port": "Arp.Plc.Eclr/TestBench1.CycleCount",
     "publish_data":[{
       "port"   : "Arp.Plc.Eclr/TestBench1.PubLoadTestBool",
       "qos": 0,
@@ -53,10 +55,9 @@ The entries in this file must conform to the defined JSON schema (please refer f
 
 **Note:** Every invalid configuration (invalid schema or missing mandatory field) leads to a stop of the app. Debug information will appear in the Output.log file of the PLC: `/opt/plcnext/logs/Output.log`
 
-
 ## Requirements
 
-* AXC F 2152 with minimum firmware version 2019.3
+* AXC F 2152 with minimum firmware version 2019.9
 * Valid account for the PLCnext Store with payment credentials (not needed for the trial version)
 * The PLCnext Control must be connected to the internet and must be registered in the PLCnext Store
 
@@ -81,7 +82,7 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
 
 **This is only an example. There are many other free MQTT Test Clients for Android, Windows or Linux available*
 
-1. Make sure that your AXC F 2152 runs on [firmware](https://www.phoenixcontact.com/qr/2404267/firmware) version >=2019.3, and that it has access to the Internet.
+1. Make sure that your AXC F 2152 runs on [firmware](https://www.phoenixcontact.com/qr/2404267/firmware) version >=2019.9, and that it has access to the Internet.
 1. Register for a user account and authorize your AXC F 2152 in the [PLCnext Store](https://www.plcnextstore.com).
 1. Deploy the app via the PLCnext Store.
 1. Create an IEC 61131 project in PLCnext Engineer with the following configuration:
@@ -166,17 +167,19 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 ### Broker properties
 A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
 
-**Note:** The MQTT Client version 1.1 only supports one MQTT Broker connection.
+**Note:** The MQTT Client version 2.0 only supports one MQTT Broker connection.
 
 
-Name            | Required | JSON type        | Description
-:---            | :---     | :---             | :---
-host            | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
-clientId        | Yes      | string           | A client identifier that is unique on the server being connected to.
-status_port     | No       | string           | The name of a boolean GDS port that will receive the client connection status.<sup>2</sup>
-connect_options | Yes      | object           | The connection options. See table below.
-publish_data    | No       | array of objects | MQTT publish information. See table below.
-subscribe_data  | No       | array of objects | MQTT subscribe information. See table below.
+Name              | Required | JSON type        | Description
+:---              | :---     | :---             | :---
+host              | Yes      | string           | The address of the server to connect to, specified as a URI.<sup>1</sup>
+clientId          | Yes      | string           | A client identifier that is unique on the server being connected to.
+status_port       | No       | string           | The name of a boolean GDS port that will receive the client connection status.<sup>2</sup>
+connect_options   | Yes      | object           | The connection options. See table below.
+publish_on_change | No       | boolean          | Publish all variables on change (false/default: publish on a fixed period).<sup>3</sup>
+cycle_count_port  | No       | string           | The name of a UInt64 GDS port which can receive a monotonically increasing integer.<sup>2,4</sup>.
+publish_data      | No       | array of objects | MQTT publish information. See table below.
+subscribe_data    | No       | array of objects | MQTT subscribe information. See table below.
 
 **Note:**
 1. The host _must_ be specified in the following format:
@@ -190,6 +193,11 @@ subscribe_data  | No       | array of objects | MQTT subscribe information. See 
    *Arp.Plc.Eclr/ProgramInstance.PortName*
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of a port variable defined in that program.
+
+1. The `publish_on_change` switch applies to all published variables, i.e. all variables must be published either on change, or on fixed period(s).
+The maximum publish frequency remains at 2 Hz (i.e. 500 ms period).
+
+1. To assist with the "Publish On Change" feature, users can configure a GDS port to receive an integer that increments after each publish cycle. This `cycle_count_port` value can be used as a clock to feed messages into GDS variables from a buffer, if necessary.
 
 -----------
 #### connect_options
@@ -299,16 +307,18 @@ topics   | Yes      | array of strings | Message are published to all these topi
    *Arp.Plc.Eclr/ProgramInstance.PortName*
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
-1. The MQTT app version 1.1 only supports QoS 0
-1. The MQTT app version 1.1 does not support 'retained'.
+1. The MQTT app version 2.0 only supports QoS 0
+1. The MQTT app version 2.0 does not support 'retained'.
 
 
 #### publish_data configuration example
 The following example shows a valid configuration.
 
-**Note:** Make sure that the assigned GDS port exists and that the data type is correct. An incorrect configuration will prevent the app from starting.
+**Note:** Make sure that the assigned GDS ports exist and that the data type is correct. An incorrect configuration will prevent the app from starting.
 
    ```json
+    "publish_on_change": true,
+    "cycle_count_port": "Arp.Plc.Eclr/TestBench1.CycleCount",
     "publish_data":[{
       "port"   : "Arp.Plc.Eclr/TestBench1.PubLoadTestBool",
       "qos": 0,
@@ -318,6 +328,7 @@ The following example shows a valid configuration.
       ]
     }
 ```
+
 -----------
 <div class="page"></div>
 

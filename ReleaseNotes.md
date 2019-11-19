@@ -4,6 +4,28 @@
 
 | Date       | Version     |
 |------------|-------------|
+| 19.11.2019 | 2.0.0       |
+
+### New Features
+
+- "Publish On Change".
+
+  There is now the option to publish values only when they change, rather than on a fixed time period.
+  The `publish_on_change` switch applies to all published variables, i.e. all variables must be published either on change, or on fixed period(s).
+  The maximum publish frequency remains at 2 Hz (i.e. 500 ms period). To assist with this feature, users can configure a GDS port to receive an integer that increments after each publish cycle. This `cycle_count_port` value can be used as a clock to feed messages into GDS variables from a buffer, if necessary.
+
+### Changes
+
+### BugFixes
+
+- The `username` configuration variable now works as intended.
+
+----------
+
+## Previous versions
+
+| Date       | Version     |
+|------------|-------------|
 | 25.05.2019 | 1.1.1       |
 
 ### New Features
@@ -18,8 +40,6 @@
 - Publishing now occurs at the correct frequency.
 
 ----------
-
-## Previous versions
 
 | Date       | Version     |
 |------------|-------------|
