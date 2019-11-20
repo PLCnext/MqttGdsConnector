@@ -69,7 +69,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 * Support of TCP and Websockets over an unencrypted or an encrypted (SSL/TLS) connection
 * Automatic reconnect to the MQTT Broker
 * Easy handling due to GDS port mapping, no further configuration effort
-* Cyclic update of Publish Topics, individually adjustable (minimum 500ms)
+* Publish data on change or, alternatively, cyclic update of Publish Topics, individually adjustable (minimum 500ms)
 * Support of the following data types* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String**, DateTime)
 
 *\*The named data types are C++ types. Please refer the PLCnext Technology Handbook (available in the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_wrapper&view=wrapper&Itemid=353&lang=en)) for the corresponding IEC 61131-3 or Matlab<sup>&trade;</sup> Simulink data types.*  
@@ -168,7 +168,6 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
 
 **Note:** The MQTT Client version 2.0 only supports one MQTT Broker connection.
-
 
 Name              | Required | JSON type        | Description
 :---              | :---     | :---             | :---
@@ -309,7 +308,6 @@ topics   | Yes      | array of strings | Message are published to all these topi
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
 1. The MQTT app version 2.0 only supports QoS 0
 1. The MQTT app version 2.0 does not support 'retained'.
-
 
 #### publish_data configuration example
 The following example shows a valid configuration.
