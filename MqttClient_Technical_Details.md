@@ -2,7 +2,7 @@
 
 | Date       | Version |
 |:---------- | -------:|
-| 19.11.2019 | 2.0.0   |
+| 19.11.2019 | 1.2.0   |
 
 
 ## IMPORTANT NOTE
@@ -167,7 +167,7 @@ The configuration file `mqtt_gds.settings.json` must comply with the JSON schema
 ### Broker properties
 A valid configuration consists of an array of MQTT Broker objects. Each broker object represents one MQTT client-broker connection.
 
-**Note:** The MQTT Client version 2.0 only supports one MQTT Broker connection.
+**Note:** The MQTT Client version 1.x only supports one MQTT Broker connection.
 
 Name              | Required | JSON type        | Description
 :---              | :---     | :---             | :---
@@ -306,8 +306,8 @@ topics   | Yes      | array of strings | Message are published to all these topi
    *Arp.Plc.Eclr/ProgramInstance.PortName*
 
    ... where *ProgramInstance* must be the name of the program instance in the PLCnext Engineer project, and *PortName* must the name of an OUT port variable defined in that program.
-1. The MQTT app version 2.0 only supports QoS 0
-1. The MQTT app version 2.0 does not support 'retained'.
+1. The MQTT app version 1.x only supports QoS 0
+1. The MQTT app version 1.x does not support 'retained'.
 
 #### publish_data configuration example
 The following example shows a valid configuration.
