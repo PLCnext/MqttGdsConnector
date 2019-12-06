@@ -384,6 +384,7 @@ Remember that your own configuration file must **always** be named `mqtt_gds.set
 * Complex data types (including Arrays and Structures) are not currently supported.
 * Only QoS 0 is supported
 * The app checks the assigned GDS port in terms of availability and type during the start-up process. Any changes to GDS ports (delete, rename or type) during operation (e.g. if a modified PLCnext Engineer project is downloaded without stopping the PLC) can lead to an undefined behaviour!
+* When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
 
 -----------
 ## Error handling 
