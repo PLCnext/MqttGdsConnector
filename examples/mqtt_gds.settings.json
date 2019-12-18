@@ -36,6 +36,8 @@
           "min_retry_interval": 0,
           "max_retry_interval": 0
       },
+      "publish_on_change": true,
+      "cycle_count_port": "Arp.Plc.Eclr/MainInstance.CycleCount",
       "publish_data":
       [
         {

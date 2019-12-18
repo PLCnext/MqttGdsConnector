@@ -89,12 +89,22 @@ private: // fields
     // ... and this for edge detection
     boolean ReconnectMemory;
 
+    // Input port that indicates cyclic or on-change publishing
+    boolean PublishOnChange {false};
+
+    // Output port containing the number of cycles since startup
+    uint64 CycleCount {0};
+
     // Flag that indicates the Update method is blocked
     boolean IsBlocked = false;
 
     // Cycle counter
     // Used to publish data periodically
     int32 cycles = 0;
+
+    // Struct and vector used to store port name and value data, for change detection
+    struct port { RscString<512> name; RscVariant<512> value; };
+    std::vector<port> ports;
 
 private:
 	void Update();  // Operation that is executed on each thread loop
