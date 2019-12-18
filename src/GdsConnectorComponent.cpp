@@ -366,6 +366,33 @@ void GdsConnectorComponent::SetupConfig()
         this->log.Info("No reconnect port has been specified.");
     }
 
+    // TODO: Check that the cycle count port exists
+    if (broker.contains("cycle_count_port"))
+    {
+        RscString<512> portName = RscString<512>(broker["cycle_count_port"].get<std::string>());
+        ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+        if (portData.Error != DataAccessError::None)
+        {
+            this->log.Error("Port {0}: {1}", portName, portData.Error);
+            // Delete this port from the settings.
+            broker.erase("cycle_count_port");
+            this->allSystemsGo = false;
+            return;
+        }
+        else if (portData.Value.GetType() != RscType::Uint64)
+        {
+            this->log.Error("Cycle count port {0} is not of type Uint64.", portName);
+            // Delete this port from the settings.
+            broker.erase("cycle_count_port");
+            this->allSystemsGo = false;
+            return;
+        }
+    }
+    else
+    {
+        this->log.Info("No cycle count port has been specified.");
+    }
+
     // Create the MQTT client and check for errors
     const auto clientName = RscString<512>(broker["client_name"].get<std::string>());
     this->mqttClientId = this->pMqttClientService->CreateClient(host, clientName);
@@ -408,8 +435,8 @@ void GdsConnectorComponent::SetupConfig()
             opts.keepAliveInterval = connectOpts["keep_alive_interval"].get<int32>();
         if (connectOpts.contains("connect_timeout"))
             opts.connectTimeout = connectOpts["connect_timeout"].get<int32>();
-        if (connectOpts.contains("user_name"))
-            opts.userName = (RscString<512>)connectOpts["user_name"].get<std::string>();
+        if (connectOpts.contains("username"))
+            opts.userName = (RscString<512>)connectOpts["username"].get<std::string>();
         if (connectOpts.contains("password"))
             opts.password = (RscString<512>)connectOpts["password"].get<std::string>();
         if (connectOpts.contains("max_inflight"))
@@ -476,6 +503,10 @@ void GdsConnectorComponent::SetupConfig()
     this->retryInterval = opts.maxRetryInterval;
     this->automaticReconnect = (this->retryInterval > 0 ? opts.automaticReconnect : false);
 
+    // Check for Publish On Change
+    if (broker.contains("publish_on_change"))
+        this->PublishOnChange = broker["publish_on_change"].get<boolean>();
+
     // Initialise the automatic reconnect timer.
     this->secsToReconnect = this->retryInterval;
 
@@ -520,6 +551,13 @@ void GdsConnectorComponent::SetupConfig()
             --it;  // because the iterator is incremented by the erase method.
             this->allSystemsGo = false;
             return;
+        }
+        else
+        {
+            // If we reach here, port is OK.
+            // Add the port to the collection used for change detection.
+            // this->ports.emplace_back(port {portName, portData.Value});
+            it.value()["value"] = portData.Value.ToString().CStr();
         }
     }
 
@@ -689,14 +727,51 @@ void GdsConnectorComponent::Update()
             int32 qos = publishRecord["qos"].get<int32>();
             boolean retained = publishRecord["retained"].get<boolean>();
 
+            // Read the current value of the port variable
+            ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+            // TODO: Check for DataAccessErrors
+
             // Publish each record when required
-            if (period == -1 || (seconds % period == 0 && secPulse))
+            boolean publishNow {false};
+
+            if (this->PublishOnChange)
             {
-                // Read the current value of the port variable
-                ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+                // Compare previous value with current value, to decide whether to publish.
+                // Also publish the value on the first scan cycle.
+                if (publishRecord["value"].get<std::string>() != portData.Value.ToString().CStr()
+                    || this->CycleCount == 0)
+                {
+                    // Store current value and publish
+                    // this->log.Info("VALUE HAS CHANGED! was: {0}, now: {1}", publishRecord["value"].get<std::string>(), portData.Value.ToString().CStr());
+                    it.value()["value"] = portData.Value.ToString().CStr();
+                    publishNow = true;
+                }
+            }
+            else  // Publish on period
+            {
+                if (period == -1 || (seconds % period == 0 && secPulse))
+                {
+                    publishNow = true;
 
-                // TODO: Check for DataAccessErrors
+                    // // Read the current value of the port variable
+                    // ReadItem portData = this->pDataAccessService->ReadSingle(portName);
+                    // Iterate through the topics that the message will be published to
+                    // json * pubTopics = &it.value()["topics"];
+                    // for (auto it2 : pubTopics->items())
+                    // {
+                    //     // Publish the data
+                    //     size_t length = Sizeof(portData.Value);
+                    //     int32 response = this->pMqttClientService->Publish(this->mqttClientId, RscString<512>(it2.value()), portData.Value, length, qos, retained);
+                    //     if (response != 0)
+                    //     {
+                    //         this->log.Warning("Could not publish to topic {0}, RscVariant, {1}, {2}, {3}", it2.value().get<std::string>(), length, qos, retained);
+                    //     }
+                    // }
+                }
+            }
 
+            if (publishNow)
+            {
                 // Iterate through the topics that the message will be published to
                 json * pubTopics = &it.value()["topics"];
                 for (auto it2 : pubTopics->items())
@@ -768,6 +843,19 @@ void GdsConnectorComponent::Update()
         if (result != DataAccessError::None)
         {
             this->log.Warning("Could not write to port {0}: {1}", broker["status_port"].get<std::string>(), result);
+        }
+    }
+
+    this->CycleCount++;
+    if (broker.contains("cycle_count_port"))
+    {
+        WriteItem writePortData;
+        writePortData.PortName = RscString<512>(broker["cycle_count_port"].get<std::string>());
+        writePortData.Value = RscVariant<512>(this->CycleCount);
+        DataAccessError result = this->pDataAccessService->WriteSingle(writePortData);
+        if (result != DataAccessError::None)
+        {
+            this->log.Warning("Could not write to port {0}: {1}", broker["cycle_count_port"].get<std::string>(), result);
         }
     }
 
