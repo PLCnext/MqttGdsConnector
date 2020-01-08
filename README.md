@@ -59,7 +59,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 
 ## Requirements
 
-* AXC F 2152 with minimum firmware version 2020.0
+* AXC F 2152 with minimum firmware version 2020.0 LTS
 * Valid account for the PLCnext Store with payment credentials (not needed for the trial version)
 * The PLCnext Control must be connected to the internet and must be registered in the PLCnext Store
 
@@ -71,6 +71,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 * Easy handling due to GDS port mapping, no further configuration effort
 * Publish data on change or, alternatively, cyclic update of Publish Topics, individually adjustable (minimum 500ms)
 * Support of the following data types\* (Bool, Int8, Int16, Int32, Int64, Uint8, Uint16, Uint32, Uint64, Real32, Real64, String\*\*, DateTime)
+* Publish topics on a fixed update rate or on change
 
 *\*The named data types are C++ types. Please refer the PLCnext Technology Handbook (available in the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_wrapper&view=wrapper&Itemid=353&lang=en)) for the corresponding IEC 61131-3 or Matlab<sup>&trade;</sup> Simulink data types.*  
 **\*String data is always published with a terminating NULL character. When subscribing to String data, incoming message payloads must always include a terminating NULL character.*
