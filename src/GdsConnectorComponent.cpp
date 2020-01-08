@@ -203,6 +203,7 @@ void GdsConnectorComponent::LoadConfig()
     {
         // Settings file doesn't exist.
         this->log.Error("Configuration file {0} does not exist.", this->settingsPath);
+        this->log.Error("App will NOT START due to previous error.");
         this->allSystemsGo = false;
         return;
     }
@@ -223,6 +224,7 @@ void GdsConnectorComponent::LoadConfig()
     else if(awsSettingsSchemaFile) schemaFile = AWS_SCHEMA_FILE;
     else {
         this->log.Error("Configuration schema file does not exist.");
+        this->log.Error("App will NOT START due to previous error.");
         this->allSystemsGo = false;
         return;
     }
@@ -266,6 +268,7 @@ void GdsConnectorComponent::LoadConfig()
             }
             this->log.Error("Context: {0}, Description: {1}", context, error.description);
         }
+        this->log.Error("App will NOT START due to previous error.");
         this->allSystemsGo = false;
         return;
     }
@@ -298,6 +301,7 @@ void GdsConnectorComponent::SetupConfig()
         if (!broker.contains("connect_options"))
         {
             this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -306,6 +310,7 @@ void GdsConnectorComponent::SetupConfig()
             if (!broker["connect_options"].contains("ssl_options"))
             {
                 this->log.Error("MQTT TLS connection requires SSL options to be specified.");
+                this->log.Error("App will NOT START due to previous error.");
                 this->allSystemsGo = false;
                 return;
             }
@@ -322,6 +327,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             broker.erase("status_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -330,6 +336,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Status port {0} is not of type Bool.", portName);
             // Delete this port from the settings.
             broker.erase("status_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -349,6 +356,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             broker.erase("reconnect_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -357,6 +365,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Reconnect port {0} is not of type Bool.", portName);
             // Delete this port from the settings.
             broker.erase("reconnect_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -376,6 +385,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Port {0}: {1}", portName, portData.Error);
             // Delete this port from the settings.
             broker.erase("cycle_count_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -384,6 +394,7 @@ void GdsConnectorComponent::SetupConfig()
             this->log.Error("Cycle count port {0} is not of type Uint64.", portName);
             // Delete this port from the settings.
             broker.erase("cycle_count_port");
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -416,6 +427,7 @@ void GdsConnectorComponent::SetupConfig()
     else
     {
         this->log.Error("Error creating MQTT Client with URL {0} and client name {1}", host, clientName);
+        this->log.Error("App will NOT START due to previous error.");
         this->allSystemsGo = false;
         return;
     }
@@ -519,6 +531,7 @@ void GdsConnectorComponent::SetupConfig()
     else
     {
         this->log.Error("Error connecting to MQTT Client {0}", this->mqttClientId);
+        this->log.Error("App will NOT START due to previous error.");
         this->allSystemsGo = false;
         return;
     }
@@ -540,6 +553,7 @@ void GdsConnectorComponent::SetupConfig()
             // Delete this port from the settings.
             publishData->erase(it);
             --it;  // because the iterator is incremented by the erase method.
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -549,6 +563,7 @@ void GdsConnectorComponent::SetupConfig()
             // Delete this port from the settings.
             publishData->erase(it);
             --it;  // because the iterator is incremented by the erase method.
+            this->log.Error("App will NOT START due to previous error.");
             this->allSystemsGo = false;
             return;
         }
@@ -578,6 +593,7 @@ void GdsConnectorComponent::SetupConfig()
                 // Delete this port from the settings.
                 subPorts->erase(it2);
                 --it2;  // because the iterator is incremented by the erase method.
+                this->log.Error("App will NOT START due to previous error.");
                 this->allSystemsGo = false;
                 return;
             }
@@ -587,6 +603,7 @@ void GdsConnectorComponent::SetupConfig()
                 // Delete this port from the settings.
                 publishData->erase(it2);
                 --it2;  // because the iterator is incremented by the erase method.
+                this->log.Error("App will NOT START due to previous error.");
                 this->allSystemsGo = false;
                 return;
             }
@@ -605,6 +622,7 @@ void GdsConnectorComponent::SetupConfig()
     if (!Subscribe())
     {
         this->allSystemsGo = false;
+        this->log.Error("App will NOT START due to previous error.");
         return;
     }
 
