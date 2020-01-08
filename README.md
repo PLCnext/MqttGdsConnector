@@ -153,6 +153,7 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
          "port"   : "Arp.Plc.Eclr/MainInstance.PubMessage",
          "qos"    : 0,
          "retained": false,
+         "period": 10,
          "topics" :[
            "MyPubTopic"
          ]
@@ -240,7 +241,7 @@ subscribe_data    | No       | array of objects | MQTT subscribe information. Se
 
    *protocol://host:port*
 
-   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. For *host*, you can specify either an IP address or a domain name.
+   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. If nothing is specified, *tcp* is assumed. For *host*, you can specify either an IP address or a domain name.
 
 1. Ports on PLCnext Engineer programs must be specified in the following format:
 
@@ -414,13 +415,16 @@ A complete configuration example can be found [here](https://github.com/PLCnext/
 Remember that your own configuration file must **always** be named `mqtt_gds.settings.json`.
 
 -----------
+## Note on operation in different PLC states
+
+When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
+
 ## Known issues and limitations
 * Only one client, and one concurrent server connection, is currently supported
 * When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
 * Complex data types (including Arrays and Structures) are not currently supported.
 * Only QoS 0 is supported
 * The app checks the assigned GDS port in terms of availability and type during the start-up process. Any changes to GDS ports (delete, rename or type) during operation (e.g. if a modified PLCnext Engineer project is downloaded without stopping the PLC) can lead to an undefined behaviour!
-* When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
 
 -----------
 ## Error handling 

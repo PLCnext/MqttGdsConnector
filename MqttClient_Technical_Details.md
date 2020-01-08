@@ -112,6 +112,7 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
          "port"   : "Arp.Plc.Eclr/MainInstance.PubMessage",
          "qos"    : 0,
          "retained": false,
+         "period": 10,
          "topics" :[
            "MyPubTopic"
          ]
@@ -198,7 +199,7 @@ subscribe_data    | No       | array of objects | MQTT subscribe information. Se
 
    *protocol://host:port*
 
-   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. For *host*, you can specify either an IP address or a domain name.
+   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. If nothing is specified, *tcp* is assumed. For *host*, you can specify either an IP address or a domain name.
 
 1. Ports on PLCnext Engineer programs must be specified in the following format:
 
@@ -377,6 +378,10 @@ The following example shows a valid configuration.
 A complete configuration example can be found [here](https://github.com/PLCnext/MqttGdsConnector/tree/master/examples).  
 Remember that your own configuration file must **always** be named `mqtt_gds.settings.json`.
 <div class="page"></div>
+
+## Note on operation in different PLC states
+
+When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
 
 ## Known issues and limitations
 * Only one client, and one concurrent server connection, is currently supported
