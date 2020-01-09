@@ -2,7 +2,7 @@
 
 | Date       | Version |
 |:---------- | -------:|
-| 19.11.2019 | 1.2.0   |
+| 06.12.2019 | 1.2.0   |
 
 
 ## IMPORTANT NOTE
@@ -57,7 +57,7 @@ The entries in this file must conform to the defined JSON schema (please refer f
 
 ## Requirements
 
-* AXC F 2152 with minimum firmware version 2019.9
+* AXC F 2152 with minimum firmware version 2020.0
 * Valid account for the PLCnext Store with payment credentials (not needed for the trial version)
 * The PLCnext Control must be connected to the internet and must be registered in the PLCnext Store
 
@@ -112,6 +112,7 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
          "port"   : "Arp.Plc.Eclr/MainInstance.PubMessage",
          "qos"    : 0,
          "retained": false,
+         "period": 10,
          "topics" :[
            "MyPubTopic"
          ]
@@ -139,8 +140,21 @@ This example exchanges data between a PLC (MQTT Client) and an iPhone* or iPad* 
 1. In the MQTTool app on the iPhone or iPad, subscribe to the topic name that was entered in the `publish_data` section of the configuration file (e.g. "MyPubTopic").
 1. The messages received on the iPhone or iPad now show the value of the PubMessage variable in the PLC.
 1. On the iPhone or iPad, publish a message to the topic that was entered in the `subscribe_data` section of the configuration file (e.g. "MySubTopic"). This message now appears as the value of the SubMessage variable in the PLC.
-<div style="page-break-after: always;"></div>
 
+## "Publish on change" vs "Publish cyclically"
+
+The app can be configured to publish port data using one of two methods:
+
+1. Publish data only when the value of the data changes.
+
+1. Publish data on a fixed period, regardless of whether there has been any change to the value of the data.
+
+The first of these options is suitable for publishing data that does not change regularly. This may save on data transmission costs (e.g. on mobile data networks). This option is also suitable for event data, which may only need to be published once when the event occurs.
+
+The second option provides behaviour that is similar to that of the Proficloud Time Series Data (TSD) service, where data is published on a fixed cycle regardless of whether the data has changed.
+
+Note that when publishing "on change", changes are detected based on data samples taken every 500 ms (approximately). If the user wishes to publish data on a single topic at a faster rate than this, then the user must buffer the data (e.g. in an array), and feed the data into the published Port variable(s) at a rate not greater than the data sample rate. In order to assist with this, the MQTT Client app provides a `cycle_count_port` parameter (see configuration section below). If the `cycle_count_port` is specified in the configuration file, then the value of the `cycle_count_port` variable will be incremented by the MQTT Client app each time a data sample is taken for change detection. This variable can then be used as a "clock" for feeding data into the Publish ports. Note that the `cycle_count_port` variable will be incremented each time a data sample is taken, regardless of whether any change to the publish data is detected.
+<div style="page-break-after: always;"></div>
 
 ## Configuration reference
 
@@ -185,7 +199,7 @@ subscribe_data    | No       | array of objects | MQTT subscribe information. Se
 
    *protocol://host:port*
 
-   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. For *host*, you can specify either an IP address or a domain name.
+   ... where *protocol* must be *tcp*, *ssl*, *ws* or *wss*. If nothing is specified, *tcp* is assumed. For *host*, you can specify either an IP address or a domain name.
 
 1. Ports on PLCnext Engineer programs must be specified in the following format:
 
@@ -365,12 +379,17 @@ A complete configuration example can be found [here](https://github.com/PLCnext/
 Remember that your own configuration file must **always** be named `mqtt_gds.settings.json`.
 <div class="page"></div>
 
+## Note on operation in different PLC states
+
+When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
+
 ## Known issues and limitations
 * Only one client, and one concurrent server connection, is currently supported
 * When the network connection to the broker is lost and restored, and a manual or automatic reconnect is triggered, the MQTT Client will block for precisely the number of milliseconds specified by the broker "timeout" property (default: 300 seconds).
 * Complex data types (including Arrays and Structures) are not currently supported.
 * Only QoS 0 is supported
 * The app checks the assigned GDS port in terms of availability and type during the start-up process. Any changes to GDS ports (delete, rename or type) during operation (e.g. if a modified PLCnext Engineer project is downloaded without stopping the PLC) can lead to an undefined behaviour!
+* When the PLC goes into "Stop" mode, all PLCnext task processing will be suspended, but the MQTT Client will continue to run. GDS variables will continue to be read and written by the MQTT Client app. This is by design, because any or all GDS variables can be associated with processes that are not running in PLCnext tasks, e.g. other Function Extensions, or other Runtime applications.
 
 -----------
 ## Error handling 

@@ -4,7 +4,7 @@
 
 | Date       | Version     |
 |------------|-------------|
-| 19.11.2019 | 1.2.0       |
+| 06.12.2019 | 1.2.0       |
 
 ### New Features
 
@@ -15,6 +15,8 @@
   The maximum publish frequency remains at 2 Hz (i.e. 500 ms period). To assist with this feature, users can configure a GDS port to receive an integer that increments after each publish cycle. This `cycle_count_port` value can be used as a clock to feed messages into GDS variables from a buffer, if necessary.
 
 ### Changes
+
+- An additional message now appears in the Output.log file that makes it clear when the app has failed to start.
 
 ### BugFixes
 
