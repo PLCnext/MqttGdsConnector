@@ -480,7 +480,7 @@ The cyclic update is performed with a worker thread (500ms). The app is now runn
 
 
 ## How to get support
-The MQTT Client app is supported in the forum of the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_easydiscuss&view=categories&Itemid=221&lang=en).
+The MQTT Client app is supported in the forum of the [PLCnext Community](https://www.plcnext-community.net/forum/#/categories).
 Please raise an issue with a detailed error description and always provide a copy of the Output.log file.
 
 -----------
